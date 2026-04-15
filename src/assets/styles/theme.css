@@ -1,0 +1,20 @@
+/* Rusa Travel — global design tokens (Cyan Ocean) */
+:root {
+  /* Primary Travel Theme (Cyan Ocean) */
+  --color-50: #e7fcfe;
+  --color-100: #bcf7fb;
+  --color-200: #90f2f9;
+  --color-300: #65ecf6;
+  --color-400: #39e7f3;
+  --color-500: #1de4f2;
+  --color-600: #0cb9c6;
+  --color-700: #09919a;
+  --color-800: #06686f;
+  --color-900: #043f43;
+  --color-950: #011718;
+
+  /* Accent system */
+  --accent: #ffb020;
+  --success: #22c55e;
+  --error: #ef4444;
+}

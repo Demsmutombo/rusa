@@ -1,0 +1,402 @@
+<template>
+  <FullScreenLayout>
+    <div class="relative bg-white z-1 dark:bg-gray-900 h-screen overflow-hidden">
+      <div
+        class="relative flex flex-col justify-center w-full h-full lg:flex-row dark:bg-gray-900"
+      >
+        <div class="flex flex-col flex-1 w-full lg:w-1/2 h-full overflow-y-auto">
+          <div class="w-full max-w-md mx-auto h-full flex flex-col justify-center py-6 px-6">
+            <router-link
+              to="/"
+              class="inline-flex items-center text-sm text-gray-500 transition-colors hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 mb-6"
+            >
+              <svg
+                class="stroke-current"
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+              >
+                <path
+                  d="M12.7083 5L7.5 10.2083L12.7083 15.4167"
+                  stroke=""
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              Retour à l'accueil
+            </router-link>
+            
+            <div class="flex-1 flex flex-col justify-center">
+              <!-- Logo -->
+              <div class="flex justify-center mb-6">
+                <img 
+                  src="/images/logo/logo.png" 
+                  alt="Rusa Travel" 
+                  class="w-12 h-12 md:w-14 md:h-14 object-contain"
+                />
+              </div>
+              
+              <div>
+                <div class="mb-5 sm:mb-6 text-center">
+                  <h2
+                    class="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md"
+                  >
+                    Connexion
+                  </h2>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">
+                    Email, téléphone ou nom d’utilisateur (selon votre compte en base).
+                  </p>
+                </div>
+              <div>
+                <form @submit.prevent="handleLogin">
+                  <div class="space-y-5">
+                    <!-- Identifiant (API : emailOuTelephone) -->
+                    <div>
+                      <label
+                        for="email"
+                        class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400"
+                      >
+                        Identifiant<span class="text-error-500">*</span>
+                      </label>
+                      <input
+                        v-model="email"
+                        type="text"
+                        id="email"
+                        name="email"
+                        autocomplete="username"
+                        placeholder="ex. superadmin@rusatravel.cd ou +243…"
+                        class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                        :disabled="isLoading"
+                      />
+                    </div>
+                    <!-- Password -->
+                    <div>
+                      <label
+                        for="password"
+                        class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400"
+                      >
+                        Mot de passe<span class="text-error-500">*</span>
+                      </label>
+                      <div class="relative">
+                        <input
+                          v-model="password"
+                          :type="showPassword ? 'text' : 'password'"
+                          id="password"
+                          placeholder="Entrez votre mot de passe"
+                          class="dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent py-2.5 pl-4 pr-11 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+                          :disabled="isLoading"
+                        />
+                        <span
+                          @click="togglePasswordVisibility"
+                          class="absolute z-30 text-gray-500 -translate-y-1/2 cursor-pointer right-4 top-1/2 dark:text-gray-400"
+                        >
+                          <svg
+                            v-if="!showPassword"
+                            class="fill-current"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M10.0002 13.8619C7.23361 13.8619 4.86803 12.1372 3.92328 9.70241C4.86804 7.26761 7.23361 5.54297 10.0002 5.54297C12.7667 5.54297 15.1323 7.26762 16.0771 9.70243C15.1323 12.1372 12.7667 13.8619 10.0002 13.8619ZM10.0002 4.04297C6.48191 4.04297 3.49489 6.30917 2.4155 9.4593C2.3615 9.61687 2.3615 9.78794 2.41549 9.94552C3.49488 13.0957 6.48191 15.3619 10.0002 15.3619C13.5184 15.3619 16.5055 13.0957 17.5849 9.94555C17.6389 9.78797 17.6389 9.6169 17.5849 9.45932C16.5055 6.30919 13.5184 4.04297 10.0002 4.04297ZM9.99151 7.84413C8.96527 7.84413 8.13333 8.67606 8.13333 9.70231C8.13333 10.7286 8.96527 11.5605 9.99151 11.5605H10.0064C11.0326 11.5605 11.8646 10.7286 11.8646 9.70231C11.8646 8.67606 11.0326 7.84413 10.0064 7.84413H9.99151Z"
+                              fill="#98A2B3"
+                            />
+                          </svg>
+                          <svg
+                            v-else
+                            class="fill-current"
+                            width="20"
+                            height="20"
+                            viewBox="0 0 20 20"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              fill-rule="evenodd"
+                              clip-rule="evenodd"
+                              d="M4.63803 3.57709C4.34513 3.2842 3.87026 3.2842 3.57737 3.57709C3.28447 3.86999 3.28447 4.34486 3.57737 4.63775L4.85323 5.91362C3.74609 6.84199 2.89363 8.06395 2.4155 9.45936C2.3615 9.61694 2.3615 9.78801 2.41549 9.94558C3.49488 13.0957 6.48191 15.3619 10.0002 15.3619C11.255 15.3619 12.4422 15.0737 13.4994 14.5598L15.3625 16.4229C15.6554 16.7158 16.1302 16.7158 16.4231 16.4229C16.716 16.13 16.716 15.6551 16.4231 15.3622L4.63803 3.57709ZM12.3608 13.4212L10.4475 11.5079C10.3061 11.5423 10.1584 11.5606 10.0064 11.5606H9.99151C8.96527 11.5606 8.13333 10.7286 8.13333 9.70237C8.13333 9.5461 8.15262 9.39434 8.18895 9.24933L5.91885 6.97923C5.03505 7.69015 4.34057 8.62704 3.92328 9.70247C4.86803 12.1373 7.23361 13.8619 10.0002 13.8619C10.8326 13.8619 11.6287 13.7058 12.3608 13.4212ZM16.0771 9.70249C15.7843 10.4569 15.3552 11.1432 14.8199 11.7311L15.8813 12.7925C16.6329 11.9813 17.2187 11.0143 17.5849 9.94561C17.6389 9.78803 17.6389 9.61696 17.5849 9.45938C16.5055 6.30925 13.5184 4.04303 10.0002 4.04303C9.13525 4.04303 8.30244 4.17999 7.52218 4.43338L8.75139 5.66259C9.1556 5.58413 9.57311 5.54303 10.0002 5.54303C12.7667 5.54303 15.1323 7.26768 16.0771 9.70249Z"
+                              fill="#98A2B3"
+                            />
+                          </svg>
+                        </span>
+                      </div>
+                    </div>
+                    <!-- Error message -->
+                    <div v-if="errorMessage" class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                      <p class="text-sm text-red-600">{{ errorMessage }}</p>
+                    </div>
+                    <!-- Button -->
+                    <div>
+                      <button
+                        type="submit"
+                        :disabled="isLoading"
+                        class="flex items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg v-if="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        {{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+                <div class="mt-5">
+                  <p
+                    class="text-sm font-normal text-center text-gray-700 dark:text-gray-400 sm:text-start"
+                  >
+                    P de compte?
+                    <router-link
+                      to="/signup"
+                      class="text-brand-500 hover:text-brand-600 dark:text-brand-400"
+                      >S'inscrire</router-link
+                    >
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+        <div
+          class="relative hidden w-full h-full lg:w-1/2 lg:block"
+        >
+          <div class="absolute inset-0 bg-gradient-to-br from-primary-600 to-primary-800 dark:bg-white/5"></div>
+          <div class="absolute inset-0 bg-black/20"></div>
+          <common-grid-shape />
+          
+          <!-- Carousel Container - Cover Full Area -->
+          <div class="absolute inset-0 bg-gray-900">
+            <!-- Carousel avec animation slide -->
+            <div class="w-full h-full relative overflow-hidden shadow-2xl shadow-blue-900/50">
+              <!-- Container pour les slides -->
+              <div 
+                class="flex h-full transition-transform duration-1000 ease-in-out"
+                :style="{ transform: `translateX(-${currentSlide * 100}%)` }"
+              >
+                <!-- Tous les slides -->
+                <div 
+                  v-for="(slide, index) in 7" 
+                  :key="index"
+                  class="w-full h-full flex-shrink-0 relative"
+                >
+                  <img 
+                    :src="getImageUrl(index)" 
+                    :alt="`Slide ${index + 1}`" 
+                    class="w-full h-full object-cover transition-all duration-1500 ease-out"
+                    :class="[
+                      currentSlide === index 
+                        ? 'scale-100 blur-0 opacity-100' 
+                        : 'scale-110 blur-md opacity-80'
+                    ]"
+                    style="display !important; visibility !important;"
+                  />
+                  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-primary-500/25 to-primary-800/35"></div>
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="text-center text-white px-8">
+                      <h2 class="text-3xl font-bold mb-4 animate-fade-in">{{ slideTitles[index] }}</h2>
+                      <p class="text-white/90 animate-fade-in-delay">{{ slideDescriptions[index] }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Navigation points -->
+              <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-30">
+                <button 
+                  v-for="(slide, index) in 7" 
+                  :key="index"
+                  @click="goToSlide(index)"
+                  :class="[
+                    'w-3 h-3 rounded-full transition-all duration-500 transform',
+                    currentSlide === index 
+                      ? 'bg-white scale-125 shadow-lg blur-0' 
+                      : 'bg-white/50 hover:bg-white/75 hover:scale-110 blur-sm'
+                  ]"
+                ></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </FullScreenLayout>
+</template>
+
+<script setup >
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { getDashboardPath } from '@/config/roles'
+import CommonGridShape from '@/components/common/CommonGridShape.vue'
+import FullScreenLayout from '@/components/layout/FullScreenLayout.vue'
+
+const router = useRouter()
+const authStore = useAuthStore()
+
+const email = ref('')
+const password = ref('')
+const showPassword = ref(false)
+const isLoading = ref(false)
+const errorMessage = ref('')
+const currentSlide = ref(0)
+let autoplayInterval = null
+
+// Vos images locales
+const getImageUrl = (index) => {
+  const images = [
+    '/images/carousel/slide-1.png',
+    '/images/carousel/slide-2.png',
+    '/images/carousel/slide (3).png',
+    '/images/carousel/slide (4).png',
+    '/images/carousel/slide (5).png',
+    '/images/carousel/slide (6).png',
+    '/images/carousel/slide (7).png'
+  ]
+  return images[index] || images[0]
+}
+
+// Titres et descriptions pour chaque slide
+const slideTitles = [
+  'Rusa Travel',
+  'Réservation simple et rapide',
+  'Suivi en temps réel',
+  'Paiements sécurisés',
+  'Réseau national',
+  'Service client 24/7',
+  'Voyagez en confiance'
+]
+
+const slideDescriptions = [
+  'Votre plateforme de réservation de transport sécurisée et efficace',
+  'Réservez votre trajet en quelques clics seulement',
+  'Suivez votre trajet en temps réel sur votre mobile',
+  'Paiez en toute sécurité avec nos méthodes de paiement variées',
+  'Couvrons toutes les principales villes de la RDC',
+  'Notre équipe est disponible pour vous aider à tout moment',
+  'Des chauffeurs expérimentés et des véhicules confortables'
+]
+
+// Autoplay optimisé avec gestion mémoire
+const startAutoplay = () => {
+  if (autoplayInterval) return
+  autoplayInterval = window.setInterval(() => {
+    currentSlide.value = (currentSlide.value + 1) % 7
+  }, 8000) // Augmenté à 8 secondes pour réduire la charge
+}
+
+const stopAutoplay = () => {
+  if (autoplayInterval) {
+    clearInterval(autoplayInterval)
+    autoplayInterval = null
+  }
+}
+
+// Navigation manuelle optimisée
+const goToSlide = (index) => {
+  stopAutoplay() // Arrêter l'autoplay lors de la navigation manuelle
+  currentSlide.value = index
+  // Redémarrer l'autoplay après 2 secondes
+  setTimeout(startAutoplay, 2000)
+}
+
+onMounted(() => {
+  startAutoplay()
+})
+
+onUnmounted(() => {
+  stopAutoplay()
+})
+
+const togglePasswordVisibility = () => {
+  showPassword.value = !showPassword.value
+}
+
+const handleLogin = async () => {
+  if (!email.value || !password.value) {
+    errorMessage.value = 'Veuillez remplir tous les champs'
+    return
+  }
+
+  try {
+    isLoading.value = true
+    errorMessage.value = ''
+    
+    console.log('Tentative de connexion depuis Signin.vue...')
+    await authStore.login(email.value, password.value)
+    
+    console.log('Connexion réussie, rôle:', authStore.role)
+    
+    const redirectPath = getDashboardPath(authStore.role || 'client')
+    console.log('Redirection vers:', redirectPath)
+    router.push(redirectPath)
+  } catch (error) {
+    console.error('Erreur de connexion:', error)
+    errorMessage.value = error instanceof Error ? error.message : 'Erreur de connexion'
+  } finally {
+    isLoading.value = false
+  }
+}
+</script>
+
+<style scoped>
+/* Animations pour le carrousel */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDelay {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
+}
+
+.animate-fade-in-delay {
+  animation: fadeInDelay 0.8s ease-out 0.3s forwards;
+  opacity: 1;
+}
+
+/* Styles personnalisés pour la navigation du carousel */
+:deep(.transition-transform) {
+  transition: 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Effet de parallax subtil sur les images */
+:deep(.object-cover) {
+  transition: 1s ease-out;
+}
+
+/* Hover effects pour les flèches */
+:deep(.hover\:scale-110:hover) {
+  transform: scale(1.1);
+}
+
+/* Animation des points de navigation */
+:deep(.transition-all) {
+  transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+</style>
+
