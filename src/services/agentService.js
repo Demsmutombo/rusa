@@ -3,15 +3,41 @@
  * Base : /api/Agent — lié à idSociete ; compte login via /api/Utilisateur séparément
  */
 
+import { resolveApiUrl } from '@/config/apiOrigin'
 import { slugifyRoleName } from '@/config/roles'
 import { useAuthStore } from '@/stores/auth'
 import { assertRowBelongsToUserSociete, scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
-import { apiDelete, apiGet, apiPost, apiPut } from './apiService'
+import { apiGet, apiPost, apiPut } from './apiService'
 
 const JSON_ACCEPT = {
   headers: {
     Accept: 'text/plain, application/json;q=0.9, */*;q=0.8',
   },
+}
+
+/** URL absolue pour afficher `photoUrl` (chemins relatifs préfixés avec l’origine API). */
+export function resolveAgentPhotoUrl(photoUrl) {
+  const s = String(photoUrl ?? '').trim()
+  if (!s) return null
+  if (/^data:/i.test(s)) return s
+  if (/^https?:\/\//i.test(s)) return s
+  const path = s.startsWith('/') ? s : `/${s}`
+  return resolveApiUrl(path)
+}
+
+/** Photo sur une ligne agent / détail (camelCase ou PascalCase API). */
+export function pickAgentPhotoUrl(row) {
+  if (!row || typeof row !== 'object') return null
+  const v =
+    row.photoUrl ??
+    row.PhotoUrl ??
+    row.photoURL ??
+    row.urlPhoto ??
+    row.UrlPhoto ??
+    row.photo ??
+    row.Photo
+  if (v == null || v === '') return null
+  return String(v).trim() || null
 }
 
 export function unwrapAgentList(data) {
@@ -247,6 +273,14 @@ export function getAgent(id) {
   return apiGet(`/api/Agent/${id}`, JSON_ACCEPT)
 }
 
+/** GET /api/Agent/{id} → objet agent normalisé ou `null`. */
+export async function fetchAgentDetail(id) {
+  const nid = Number(id)
+  if (!Number.isFinite(nid) || nid <= 0) return null
+  const raw = await getAgent(nid)
+  return unwrapAgentDetailResponse(raw, nid)
+}
+
 export function unwrapAgentDetailResponse(raw, fallbackId) {
   if (!raw || typeof raw !== 'object') return null
   const o = raw.data ?? raw.value ?? raw
@@ -255,8 +289,7 @@ export function unwrapAgentDetailResponse(raw, fallbackId) {
 }
 
 /**
- * PUT /api/Agent/toggle-statut/{id} — certains backends suppriment l’enregistrement au lieu d’un simple booléen.
- * Préférer `setAgentStatut` pour une désactivation logique explicite.
+ * Bascule actif/inactif : PUT /api/Agent/toggle-statut/{id} (pas de DELETE).
  */
 export function toggleAgentStatut(id) {
   const nid = Number(id)
@@ -267,25 +300,29 @@ export function toggleAgentStatut(id) {
 }
 
 /**
- * Active ou désactive l’agent sans DELETE : PUT /api/Agent/{id} avec statut true/false
- * (recharge les champs via GET /api/Agent/{id} quand possible pour un corps complet).
+ * Met le statut souhaité en réutilisant l’API toggle (un seul appel si l’état courant diffère).
+ * @param {number|string} id
+ * @param {boolean} actif
+ * @param {object | null} [listRow] — ligne liste pour éviter un GET si `statut` est connu
  */
 export async function setAgentStatut(id, actif, listRow = null) {
   const nid = Number(id)
   if (!Number.isFinite(nid) || nid <= 0) {
     throw new Error('Identifiant agent invalide.')
   }
-  let row = listRow && typeof listRow === 'object' ? { ...listRow } : {}
-  try {
+  const want = Boolean(actif)
+  let current
+  if (listRow && typeof listRow === 'object' && 'statut' in listRow) {
+    current = listRow.statut !== false
+  } else {
     const raw = await getAgent(nid)
     const d = unwrapAgentDetailResponse(raw, nid)
-    if (d) row = { ...row, ...d }
-  } catch {
-    /* garde listRow (ligne tableau) */
+    current = d ? d.statut !== false : true
   }
-  row.idAgent = nid
-  row.statut = Boolean(actif)
-  return updateAgent(nid, normalizeAgentUpdate(row))
+  if (want === current) {
+    return getAgent(nid)
+  }
+  return toggleAgentStatut(nid)
 }
 
 export function createAgent(body) {
@@ -294,14 +331,6 @@ export function createAgent(body) {
 
 export function updateAgent(id, body) {
   return apiPut(`/api/Agent/${id}`, normalizeAgentUpdate(body))
-}
-
-export function deleteAgent(id) {
-  const nid = Number(id)
-  if (!Number.isFinite(nid) || nid <= 0) {
-    return Promise.reject(new Error('Identifiant agent invalide.'))
-  }
-  return apiDelete(`/api/Agent/${nid}`, JSON_ACCEPT)
 }
 
 /** Filtre côté client par société (si le GET ne supporte pas de query) */
@@ -318,9 +347,11 @@ export const agentService = {
   unwrapList: unwrapAgentList,
   resolveForUser: resolveAgentForUser,
   getById: getAgent,
+  fetchDetail: fetchAgentDetail,
+  resolvePhotoUrl: resolveAgentPhotoUrl,
+  pickPhotoUrl: pickAgentPhotoUrl,
   create: createAgent,
   update: updateAgent,
-  delete: deleteAgent,
   setStatut: setAgentStatut,
   toggleStatut: toggleAgentStatut,
   listBySociete: listAgentsBySociete,

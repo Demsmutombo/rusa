@@ -60,8 +60,12 @@
                   :class="[
                     'menu-item group w-full',
                     {
-                      'menu-item-active': isSubmenuOpen(groupIndex, index),
-                      'menu-item-inactive': !isSubmenuOpen(groupIndex, index),
+                      'menu-item-active':
+                        isSubmenuExpanded(groupIndex, index) ||
+                        item.subItems.some((s) => isActive(s.path)),
+                      'menu-item-inactive':
+                        !isSubmenuExpanded(groupIndex, index) &&
+                        !item.subItems.some((s) => isActive(s.path)),
                     },
                     !isExpanded && !isHovered
                       ? 'lg:justify-center'
@@ -70,7 +74,7 @@
                 >
                   <span
                     :class="[
-                      isSubmenuOpen(groupIndex, index)
+                      isSubmenuExpanded(groupIndex, index)
                         ? 'menu-item-icon-active'
                         : 'menu-item-icon-inactive',
                     ]"
@@ -87,7 +91,7 @@
                     :class="[
                       'ml-auto w-5 h-5 transition-transform duration-200',
                       {
-                        'rotate-180 text-primary-300': isSubmenuOpen(groupIndex, index),
+                        'rotate-180 text-primary-300': isSubmenuExpanded(groupIndex, index),
                       },
                     ]"
                   />
@@ -126,12 +130,12 @@
                 >
                   <div
                     v-show="
-                      isSubmenuOpen(groupIndex, index) &&
+                      isSubmenuExpanded(groupIndex, index) &&
                       (isExpanded || isHovered || isMobileOpen)
                     "
                   >
                     <ul class="mt-2 space-y-1 ml-9">
-                      <li v-for="subItem in item.subItems" :key="subItem.name">
+                      <li v-for="subItem in item.subItems" :key="subItem.path">
                         <router-link
                           :to="subItem.path"
                           :class="[
@@ -272,24 +276,9 @@ const toggleSubmenu = (groupIndex, itemIndex) => {
   openSubmenu.value = openSubmenu.value === key ? null : key;
 };
 
-const isAnySubmenuRouteActive = computed(() => {
-  return menuGroups.value.some((group) =>
-    group.items.some(
-      (item) =>
-        item.subItems && item.subItems.some((subItem) => isActive(subItem.path))
-    )
-  );
-});
-
-const isSubmenuOpen = (groupIndex, itemIndex) => {
-  const key = `${groupIndex}-${itemIndex}`;
-  return (
-    openSubmenu.value === key ||
-    (isAnySubmenuRouteActive.value &&
-      menuGroups.value[groupIndex].items[itemIndex].subItems?.some((subItem) =>
-        isActive(subItem.path)
-      ))
-  );
+/** Sous-menu ouvert uniquement au clic (évite qu’il reste bloqué ouvert sur la route active). */
+const isSubmenuExpanded = (groupIndex, itemIndex) => {
+  return openSubmenu.value === `${groupIndex}-${itemIndex}`;
 };
 
 const startTransition = (el) => {

@@ -1,3 +1,4 @@
+import 'sweetalert2/dist/sweetalert2.min.css'
 import './assets/main.css'
 // Import Swiper styles
 import 'swiper/css'

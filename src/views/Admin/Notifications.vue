@@ -219,6 +219,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
+import { notify } from '@/utils/notify'
 
 const notifications = ref([
   {
@@ -354,13 +355,17 @@ const markAllAsRead = () => {
   })
 }
 
-const deleteNotification = (notification) => {
-  if (confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
-    const index = notifications.value.findIndex(n => n.id === notification.id)
-    if (index !== -1) {
-      notifications.value.splice(index, 1)
-    }
+const deleteNotification = async (notification) => {
+  const ok = await notify.confirm(
+    'Êtes-vous sûr de vouloir supprimer cette notification ?',
+    'Supprimer la notification'
+  )
+  if (!ok) return
+  const index = notifications.value.findIndex((n) => n.id === notification.id)
+  if (index !== -1) {
+    notifications.value.splice(index, 1)
   }
+  await notify.toast.success('Notification supprimée.')
 }
 </script>
 

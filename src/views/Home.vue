@@ -1,10 +1,10 @@
 <template>
   <div
-    class="min-h-screen bg-gray-50 text-gray-900 dark:bg-[#121212] dark:text-gray-100"
+    class="min-h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100"
   >
     <!-- Navigation (style app sombre) -->
     <nav
-      class="sticky top-0 z-50 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-[#121212]/95 dark:shadow-none"
+      class="sticky top-0 z-50 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-gray-950/95 dark:shadow-none"
     >
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
@@ -63,7 +63,7 @@
         <!-- Mobile Navigation Menu -->
         <div
           v-if="mobileNavOpen"
-          class="md:hidden border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-[#1E1E1E]"
+          class="md:hidden border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
         >
           <div class="px-2 pt-2 pb-3 space-y-1">
             <a href="#accueil" @click="closeMobileNav" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-primary-400 transition">Accueil</a>
@@ -109,7 +109,7 @@
     <section
       ref="heroRef"
       id="accueil"
-      class="relative min-h-[100dvh] overflow-hidden bg-gray-950 pb-3 text-white"
+      class="relative min-h-[100dvh] overflow-hidden bg-gray-900 pb-3 text-white dark:bg-gray-950"
     >
       <div
         class="pointer-events-none absolute inset-x-0 bottom-0 z-[15] h-56 bg-gradient-to-b from-transparent from-[28%] via-gray-950/25 via-[55%] to-gray-50 sm:h-64 sm:from-[22%] dark:via-gray-950/50 dark:via-[50%] dark:to-gray-900"
@@ -211,11 +211,11 @@
       </div>
     </section>
 
-    <!-- Recherche — carte type app (fond #1E1E1E, séparateurs pointillés) -->
+    <!-- Recherche — carte type app (fond gray-900 en sombre, séparateurs pointillés) -->
     <section
       ref="searchRef"
       id="search"
-      class="relative bg-gradient-to-b from-gray-100 to-white py-16 dark:from-[#121212] dark:to-[#121212] sm:py-20"
+      class="relative bg-gradient-to-b from-gray-100 to-white py-16 dark:from-gray-950 dark:to-gray-950 sm:py-20"
     >
       <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="mb-10 text-center md:mb-12">
@@ -231,7 +231,7 @@
 
         <div class="mx-auto max-w-5xl">
           <div
-            class="home-app-card overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-[#1E1E1E] dark:shadow-none"
+            class="home-app-card overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
           >
             <div class="border-b border-dashed border-gray-200 px-6 py-5 dark:border-gray-700 md:px-8">
               <p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">
@@ -265,7 +265,7 @@
                   Départ
                 </label>
                 <select
-                  class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm font-medium text-gray-900 transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-gray-700 dark:bg-[#2A2A2A] dark:text-white"
+                  class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm font-medium text-gray-900 transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 >
                   <option>Choisissez votre ville</option>
                   <option>Kinshasa</option>
@@ -300,7 +300,7 @@
                   Destination
                 </label>
                 <select
-                  class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm font-medium text-gray-900 transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-gray-700 dark:bg-[#2A2A2A] dark:text-white"
+                  class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm font-medium text-gray-900 transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 >
                   <option>Choisissez votre destination</option>
                   <option>Kinshasa</option>
@@ -330,7 +330,7 @@
                 </label>
                 <input
                   type="date"
-                  class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm font-medium text-gray-900 transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-gray-700 dark:bg-[#2A2A2A] dark:text-white"
+                  class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm font-medium text-gray-900 transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 />
               </div>
 
@@ -365,7 +365,7 @@
     <section
       ref="destinationsRef"
       id="destinations"
-      class="border-t border-dashed border-gray-200 py-16 dark:border-gray-800 dark:bg-[#121212] sm:py-20"
+      class="border-t border-dashed border-gray-200 py-16 dark:border-gray-800 dark:bg-gray-950 sm:py-20"
     >
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="mb-10 flex flex-col items-start justify-between gap-4 sm:mb-12 sm:flex-row sm:items-center">
@@ -395,7 +395,7 @@
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-5">
           <!-- Kinshasa -->
           <div
-            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-[#1E1E1E] dark:hover:border-primary-500/30"
+            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500/30"
           >
             <div
               class="flex items-center gap-4 border-b border-dashed border-gray-200 p-5 dark:border-gray-700"
@@ -438,7 +438,7 @@
 
           <!-- Lubumbashi -->
           <div
-            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-[#1E1E1E] dark:hover:border-primary-500/30"
+            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500/30"
           >
             <div
               class="flex items-center gap-4 border-b border-dashed border-gray-200 p-5 dark:border-gray-700"
@@ -481,7 +481,7 @@
 
           <!-- Goma -->
           <div
-            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-[#1E1E1E] dark:hover:border-primary-500/30"
+            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500/30"
           >
             <div
               class="flex items-center gap-4 border-b border-dashed border-gray-200 p-5 dark:border-gray-700"
@@ -524,7 +524,7 @@
 
           <!-- Kisangani -->
           <div
-            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-[#1E1E1E] dark:hover:border-primary-500/30"
+            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-gray-900 dark:hover:border-primary-500/30"
           >
             <div
               class="flex items-center gap-4 border-b border-dashed border-gray-200 p-5 dark:border-gray-700"
@@ -572,7 +572,7 @@
     <section
       ref="featuresRef"
       id="about"
-      class="border-t border-dashed border-gray-200 py-16 dark:border-gray-800 dark:bg-[#121212] sm:py-20"
+      class="border-t border-dashed border-gray-200 py-16 dark:border-gray-800 dark:bg-gray-950 sm:py-20"
     >
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="mb-10 text-center md:mb-12">
@@ -586,7 +586,7 @@
 
         <div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
           <div
-            class="feature-card rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-800 dark:bg-[#1E1E1E] dark:shadow-none"
+            class="feature-card rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
           >
             <div
               class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500/15 text-primary-600 dark:text-primary-400"
@@ -607,7 +607,7 @@
           </div>
 
           <div
-            class="feature-card rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-800 dark:bg-[#1E1E1E] dark:shadow-none"
+            class="feature-card rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
           >
             <div
               class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500/15 text-primary-600 dark:text-primary-400"
@@ -628,7 +628,7 @@
           </div>
 
           <div
-            class="feature-card rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-800 dark:bg-[#1E1E1E] dark:shadow-none"
+            class="feature-card rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-800 dark:bg-gray-900 dark:shadow-none"
           >
             <div
               class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500/15 text-primary-600 dark:text-primary-400"
@@ -652,10 +652,10 @@
     </section>
 
     <!-- CTA — barre type confirmation paiement -->
-    <section ref="ctaRef" class="border-t border-dashed border-gray-200 py-12 dark:border-gray-800 dark:bg-[#121212]">
+    <section ref="ctaRef" class="border-t border-dashed border-gray-200 py-12 dark:border-gray-800 dark:bg-gray-950">
       <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
         <div
-          class="home-app-card overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-[#1E1E1E] dark:shadow-none md:p-8"
+          class="home-app-card overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-gray-900 dark:shadow-none md:p-8"
         >
           <h3 class="text-center text-xl font-bold text-gray-900 dark:text-white md:text-2xl">
             Prêt à voyager avec nous ?
@@ -684,10 +684,10 @@
     </section>
 
     <!-- Chiffres -->
-    <section ref="statsRef" class="border-t border-dashed border-gray-200 py-14 dark:border-gray-800 dark:bg-[#0f0f0f]">
+    <section ref="statsRef" class="border-t border-dashed border-gray-200 py-14 dark:border-gray-800 dark:bg-gray-950">
       <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div
-          class="grid grid-cols-2 gap-4 rounded-3xl border border-gray-200 bg-white p-6 md:grid-cols-4 md:gap-6 md:p-8 dark:border-gray-800 dark:bg-[#1E1E1E]"
+          class="grid grid-cols-2 gap-4 rounded-3xl border border-gray-200 bg-white p-6 md:grid-cols-4 md:gap-6 md:p-8 dark:border-gray-800 dark:bg-gray-900"
         >
           <div class="text-center">
             <p
@@ -734,7 +734,7 @@
     </section>
 
     <!-- Footer -->
-    <footer id="contact" class="border-t border-gray-800 bg-[#0d0d0d] py-12 text-white">
+    <footer id="contact" class="border-t border-gray-800 bg-gray-900 py-12 text-white dark:bg-gray-950">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
           <!-- Company Info -->

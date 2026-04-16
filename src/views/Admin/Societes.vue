@@ -560,6 +560,7 @@ import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
 import { useSidebar } from '@/composables/useSidebar'
+import { notify } from '@/utils/notify'
 import {
   listSocietesArray,
   getSociete,
@@ -702,7 +703,7 @@ function closeModal() {
 
 async function save() {
   if (!form.value.nom?.trim()) {
-    alert('Le nom est obligatoire')
+    await notify.warning('Saisie incomplète', 'Le nom de la société est obligatoire.')
     return
   }
   saving.value = true
@@ -712,22 +713,29 @@ async function save() {
     } else {
       await createSociete(form.value)
     }
+    const wasEditing = editing.value
     closeModal()
     await load()
+    await notify.toast.success(wasEditing ? 'Société modifiée.' : 'Société créée.')
   } catch (e) {
-    alert(e?.message || 'Erreur enregistrement')
+    await notify.error('Enregistrement', e?.message || 'Erreur lors de l’enregistrement.')
   } finally {
     saving.value = false
   }
 }
 
 async function remove(s) {
-  if (!confirm('Supprimer la société « ' + s.nom + ' » ?')) return
+  const ok = await notify.confirm(
+    'La société « ' + s.nom + ' » sera supprimée. Cette action est définitive.',
+    'Supprimer la société ?'
+  )
+  if (!ok) return
   try {
     await deleteSociete(s.idSociete)
     await load()
+    await notify.toast.success('Société supprimée.')
   } catch (e) {
-    alert(e?.message || 'Suppression impossible')
+    await notify.error('Suppression', e?.message || 'Suppression impossible.')
   }
 }
 

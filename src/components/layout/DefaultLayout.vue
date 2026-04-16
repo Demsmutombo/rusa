@@ -3,7 +3,7 @@
     <app-sidebar />
     <Backdrop />
     <div
-      class="min-w-0 flex-1 transition-all duration-300 ease-in-out"
+      class="min-w-0 flex-1 transition-all duration-300 ease-in-out dark:bg-primary-950"
       :class="[isExpanded || isHovered ? 'lg:ml-[290px]' : 'lg:ml-[90px]']"
     >
       <app-header />

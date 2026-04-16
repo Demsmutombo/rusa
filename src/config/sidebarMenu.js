@@ -20,8 +20,6 @@ import {
   ErrorIcon,
   BarChartIcon,
   SettingsIcon,
-  GridIcon,
-  ChatIcon,
   DocsIcon,
   TableIcon,
   WarningIcon,
@@ -30,6 +28,32 @@ import {
 export const SIDEBAR_MODULES_VISIBLE = true
 
 export const SIDEBAR_SUPERADMIN_SOCIETES_NAV = true
+
+/**
+ * Entrées affichées dans la sidebar **module admin** (rôle admin, super-admin minimal, gérant filtré sur les mêmes clés).
+ * Aligné sur les routes `/admin/*` et la gestion métier (sans suppression, statuts via API).
+ * @type {string[]}
+ */
+/** Menu module admin / super-admin minimal : uniquement l’écran déjà géré côté métier. */
+export const SIDEBAR_ADMIN_ENABLED_KEYS = [
+  'dashboard',
+  'agents',
+  'destinations',
+  'buses',
+  'bus-types',
+]
+
+/** Menu gérant : inchangé côté clés (opérations / admin paths), filtré séparément. */
+const SIDEBAR_GERANT_ENABLED_KEYS = [
+  'dashboard',
+  'trips',
+  'reservations',
+  'agents',
+  'destinations',
+  'buses',
+  'bus-types',
+  'transporteurs',
+]
 
 /** @type {Record<string, string[] | null>} */
 export const SIDEBAR_PATHS_WHITELIST = {
@@ -135,20 +159,63 @@ function applyPermissionFilters(groups, ctx) {
     .filter(Boolean)
 }
 
+/**
+ * Entrée « Bus » : liste déroulante avec sections Types de bus / Bus (même base path admin ou super-admin).
+ * @param {{ enabled: Set<string>, basePath: string, requiredModule?: string }} opts
+ */
+function makeBusNavItem(opts) {
+  const { enabled, basePath, requiredModule } = opts
+  const hasTypes = enabled.has('bus-types')
+  const hasBuses = enabled.has('buses')
+  if (!hasTypes && !hasBuses) return null
+
+  const typesPath = `${basePath}/bus-types`
+  const busesPath = `${basePath}/buses`
+  const extra = requiredModule ? { requiredModule } : {}
+
+  const subItems = []
+  if (hasTypes) {
+    subItems.push({ name: 'Types de bus', path: typesPath })
+  }
+  if (hasBuses) {
+    subItems.push({ name: 'Bus', path: busesPath })
+  }
+
+  if (subItems.length === 1) {
+    const only = subItems[0]
+    const isTypes = only.path.endsWith('/bus-types')
+    return {
+      key: isTypes ? 'bus-types' : 'buses',
+      icon: isTypes ? ListIcon : BoxIcon,
+      name: only.name,
+      path: only.path,
+      ...extra,
+    }
+  }
+
+  return {
+    key: 'bus-menu',
+    icon: BoxIcon,
+    name: 'Bus',
+    subItems,
+    ...extra,
+  }
+}
+
 /** @param {SidebarMenuContext} ctx */
 function buildSuperAdminMinimal(ctx) {
-  return [
-    {
-      title: 'Super-Admin',
-      items: [
-        { icon: LayoutDashboardIcon, name: ctx.t('dashboard'), path: '/super-admin' },
-        { icon: UserCircleIcon, name: 'Agents', path: '/super-admin/agents' },
-        { icon: PageIcon, name: 'Destinations', path: '/super-admin/destinations' },
-        { icon: BoxIcon, name: 'Bus', path: '/super-admin/buses' },
-        { icon: ListIcon, name: 'Types de bus', path: '/super-admin/bus-types' },
-      ],
-    },
+  const all = [
+    { key: 'dashboard', icon: LayoutDashboardIcon, name: ctx.t('dashboard'), path: '/super-admin' },
+    { key: 'agents', icon: UserCircleIcon, name: 'Agents', path: '/admin/agents' },
+    { key: 'destinations', icon: PageIcon, name: 'Destinations', path: '/super-admin/destinations' },
   ]
+  const enabled = new Set(SIDEBAR_ADMIN_ENABLED_KEYS)
+  const busNav = makeBusNavItem({ enabled, basePath: '/super-admin' })
+  const items = [
+    ...all.filter((row) => enabled.has(row.key)).map(({ key: _k, ...rest }) => rest),
+    ...(busNav ? [(({ key: _k, ...rest }) => rest)(busNav)] : []),
+  ]
+  return [{ title: 'Super-Admin', items }]
 }
 
 /** @param {SidebarMenuContext} ctx */
@@ -164,59 +231,95 @@ function buildAdminModuleMenu(ctx) {
         ? 'Menu Admin'
         : 'Menu administration'
 
-  const items = [
-    { icon: LayoutDashboardIcon, name: ctx.t('dashboard'), path: dash },
+  const candidates = [
+    { key: 'dashboard', icon: LayoutDashboardIcon, name: ctx.t('dashboard'), path: dash },
     {
+      key: 'agents',
       icon: UserCircleIcon,
       name: 'Agents',
-      path: isSa ? `${basePath}/agents` : '/admin/agents',
+      path: '/admin/agents',
     },
     {
+      key: 'destinations',
       icon: PageIcon,
       name: 'Destinations',
       path: isSa ? `${basePath}/destinations` : '/admin/destinations',
     },
-    { icon: BoxIcon, name: 'Bus', path: isSa ? `${basePath}/buses` : '/admin/buses' },
-    {
-      icon: ListIcon,
-      name: 'Types de bus',
-      path: isSa ? `${basePath}/bus-types` : '/admin/bus-types',
-    },
   ]
 
-  if (!isSa && userRole === 'admin') {
-    items.push(
-      { icon: UserCircleIcon, name: 'Utilisateurs', path: '/admin/users', requiredPermissions: ['admin.users'] },
-      { icon: GridIcon, name: 'Sociétés', path: '/admin/societes', requiredPermissions: ['admin.societes'] },
-      { icon: UserCircleIcon, name: 'Transporteurs', path: '/admin/transporteurs', requiredPermissions: ['admin.transporteurs'] },
-      { icon: HomeIcon, name: 'Trajets', path: '/admin/trips', requiredPermissions: ['admin.trips'] },
-      { icon: Calendar2Line, name: 'Réservations', path: '/admin/reservations', requiredPermissions: ['admin.reservations'] },
-      { icon: ErrorIcon, name: 'Paiements', path: '/admin/payments', requiredPermissions: ['admin.payments'] },
-      { icon: ChatIcon, name: 'Notifications', path: '/admin/notifications', requiredPermissions: ['admin.notifications'] },
-      { icon: SettingsIcon, name: 'Paramètres', path: '/admin/settings', requiredPermissions: ['admin.settings'] }
-    )
-  }
+  const enabled = new Set(SIDEBAR_ADMIN_ENABLED_KEYS)
+  const busNav = makeBusNavItem({ enabled, basePath })
+  if (busNav) candidates.push(busNav)
+
+  const items = candidates
+    .filter((row) => {
+      if (row.subItems?.length) return enabled.has('bus-types') || enabled.has('buses')
+      return enabled.has(row.key)
+    })
+    .map(({ key: _k, ...rest }) => rest)
 
   return [{ title, items }]
 }
 
 /** @param {SidebarMenuContext} ctx */
 function buildGerantMenu(ctx) {
-  return [
+  const candidates = [
+    { key: 'dashboard', icon: LayoutDashboardIcon, name: 'Dashboard', path: '/gerant' },
     {
-      title: 'Menu Manager Général',
-      items: [
-        { icon: LayoutDashboardIcon, name: 'Dashboard', path: '/gerant' },
-        { icon: HomeIcon, name: 'Trajets', path: '/admin/trips', requiredModule: 'operations' },
-        { icon: Calendar2Line, name: 'Réservations', path: '/admin/reservations', requiredModule: 'operations' },
-        { icon: UserCircleIcon, name: 'Agents', path: '/admin/agents', requiredModule: 'operations' },
-        { icon: PageIcon, name: 'Destinations', path: '/admin/destinations', requiredModule: 'operations' },
-        { icon: BoxIcon, name: 'Bus', path: '/admin/buses', requiredModule: 'operations' },
-        { icon: ListIcon, name: 'Types de bus', path: '/admin/bus-types', requiredModule: 'operations' },
-        { icon: UserCircleIcon, name: 'Transporteurs', path: '/admin/transporteurs', requiredModule: 'operations' },
-      ],
+      key: 'trips',
+      icon: HomeIcon,
+      name: 'Trajets',
+      path: '/admin/trips',
+      requiredModule: 'operations',
+    },
+    {
+      key: 'reservations',
+      icon: Calendar2Line,
+      name: 'Réservations',
+      path: '/admin/reservations',
+      requiredModule: 'operations',
+    },
+    {
+      key: 'agents',
+      icon: UserCircleIcon,
+      name: 'Agents',
+      path: '/admin/agents',
+      requiredModule: 'operations',
+    },
+    {
+      key: 'destinations',
+      icon: PageIcon,
+      name: 'Destinations',
+      path: '/admin/destinations',
+      requiredModule: 'operations',
+    },
+    {
+      key: 'transporteurs',
+      icon: UserCircleIcon,
+      name: 'Transporteurs',
+      path: '/admin/transporteurs',
+      requiredModule: 'operations',
     },
   ]
+  const enabled = new Set(SIDEBAR_GERANT_ENABLED_KEYS)
+  const busNav = makeBusNavItem({
+    enabled,
+    basePath: '/admin',
+    requiredModule: 'operations',
+  })
+  if (busNav) {
+    const idx = candidates.findIndex((r) => r.key === 'transporteurs')
+    if (idx === -1) candidates.push(busNav)
+    else candidates.splice(idx, 0, busNav)
+  }
+
+  const items = candidates
+    .filter((row) => {
+      if (row.subItems?.length) return enabled.has('bus-types') || enabled.has('buses')
+      return enabled.has(row.key)
+    })
+    .map(({ key: _k, ...rest }) => rest)
+  return [{ title: 'Menu Manager Général', items }]
 }
 
 /** @param {SidebarMenuContext} ctx */

@@ -78,13 +78,7 @@ const router = createRouter({
     },
     {
       path: '/super-admin/agents',
-      name: 'SuperAdminAgents',
-      component: () => import('../views/Admin/Agents.vue'),
-      meta: {
-        title: 'Agents - Super-Admin - Rusa Travel',
-        requiresAuth: true,
-        roles: ['superadmin'],
-      },
+      redirect: '/admin/agents',
     },
     {
       path: '/super-admin/destinations',
