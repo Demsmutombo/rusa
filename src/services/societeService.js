@@ -3,6 +3,8 @@
  * Base : /api/Societe
  */
 
+import { useAuthStore } from '@/stores/auth'
+import { scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
 import { apiGet, apiPost, apiPut, apiDelete } from './apiService'
 
 /** Aligné Swagger (souvent text/plain + corps JSON). */
@@ -73,7 +75,17 @@ export function listSocietes() {
 /** Liste toujours sous forme de tableau */
 export async function listSocietesArray() {
   const raw = await listSocietes()
-  return unwrapSocieteList(raw)
+  let list = unwrapSocieteList(raw)
+  try {
+    const auth = useAuthStore()
+    list = scopeEntitiesToUserSociete(list, {
+      role: auth.role,
+      societeId: auth.societeId,
+    })
+  } catch {
+    /* Pinia non prêt */
+  }
+  return list
 }
 
 /**

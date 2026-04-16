@@ -2,11 +2,23 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { login, disconnectUser } from '@/services/authService'
 import { resolveAgentForUser } from '@/services/agentService'
-import { normalizeAppRole } from '@/config/roles'
+import {
+  normalizeAppRole,
+  pickIdRoleFromAuthPayload,
+  pickIdRoleFromUser,
+  resolveAppRoleSlug,
+  getRoleDefinitionBySlug,
+  roleGrantsPermissionCode,
+} from '@/config/roles'
 import { useRoleCatalogStore } from '@/stores/roleCatalog'
 import { idAgentFromToken, sessionHintsFromJwt } from '@/utils/jwtClaims'
 
-export { normalizeAppRole } from '@/config/roles'
+export { normalizeAppRole, resolveAppRoleSlug } from '@/config/roles'
+
+const LS_SA_TENANT_SOCIETE = 'rusa_sa_active_societe'
+const LS_AUTH_ROLE_ID = 'rusa_auth_role_id'
+const LS_AUTH_ROLE_NAME = 'rusa_auth_role_name'
+const LS_AUTH_SOCIETE_ID = 'rusa_auth_societe_id'
 
 /** Extrait le libellé de rôle principal depuis la réponse POST authentifier (ou un objet utilisateur). */
 function extractPrimaryRoleNom(data) {
@@ -25,6 +37,40 @@ function extractPrimaryRoleNom(data) {
   return ''
 }
 
+/**
+ * Expose `societeId` / `roleId` alignés sur `idSociete` / `idRole` (contrat métier multi-société).
+ * @param {Record<string, unknown>} u
+ * @param {Record<string, unknown> | null | undefined} dataRoot
+ */
+function syncTenantFieldsOnUser(u, dataRoot) {
+  const o = { ...u }
+  const dr = dataRoot && typeof dataRoot === 'object' ? dataRoot : {}
+  const sid =
+    o.societeId ??
+    o.idSociete ??
+    o.IdSociete ??
+    dr.societeId ??
+    dr.idSociete ??
+    dr.IdSociete
+  if (sid != null && sid !== '') {
+    const n = Number(sid)
+    if (Number.isFinite(n) && n > 0) {
+      o.societeId = n
+      if (o.idSociete == null) o.idSociete = n
+    }
+  }
+  const rid =
+    o.roleId ?? o.idRole ?? o.IdRole ?? dr.roleId ?? dr.idRole ?? dr.IdRole
+  if (rid != null && rid !== '') {
+    const n = Number(rid)
+    if (Number.isFinite(n) && n > 0) {
+      o.roleId = n
+      if (o.idRole == null) o.idRole = n
+    }
+  }
+  return o
+}
+
 /** Fusionne le bloc utilisateur avec primaryRole / roles présents à la racine de la réponse API. */
 function enrichUtilisateurFromAuthPayload(data) {
   const u = data?.utilisateur ? { ...data.utilisateur } : null
@@ -34,8 +80,12 @@ function enrichUtilisateurFromAuthPayload(data) {
     u.roles = data.roles
   }
   if (u.idRole == null && data.idRole != null) u.idRole = data.idRole
+  if (u.idRole == null && data.roleId != null) u.idRole = data.roleId
   if (u.idAgent == null && data.idAgent != null) u.idAgent = data.idAgent
-  return u
+  if (u.idSociete == null && data.idSociete != null) u.idSociete = data.idSociete
+  if (u.idSociete == null && data.IdSociete != null) u.idSociete = data.IdSociete
+  if (u.idSociete == null && data.societeId != null) u.idSociete = data.societeId
+  return syncTenantFieldsOnUser(u, data)
 }
 
 function normalizePermissionsList(raw) {
@@ -53,8 +103,9 @@ function normalizePermissionsList(raw) {
 }
 
 function applyRoleFromUserPayload(userPayload) {
-  const raw = extractPrimaryRoleNom({ utilisateur: userPayload })
-  return normalizeAppRole(raw)
+  const idr = pickIdRoleFromUser(userPayload)
+  const nom = extractPrimaryRoleNom({ utilisateur: userPayload })
+  return resolveAppRoleSlug({ idRole: idr, nom })
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -66,9 +117,175 @@ export const useAuthStore = defineStore('auth', () => {
   const client = ref(null)
   const agent = ref(null)
   const isLoading = ref(false)
+  /** Contexte société pour Super-Admin (API multi-tenant) ; ignoré pour les autres rôles. */
+  const superAdminTenantSocieteId = ref(null)
+
+  /** Champs de session explicites (persistés) — alignés JWT / profil. */
+  const sessionRoleId = ref(null)
+  const sessionRoleName = ref('')
+  const sessionSocieteId = ref(null)
+
+  function persistAuthSessionFields() {
+    try {
+      if (sessionRoleId.value != null && Number(sessionRoleId.value) > 0) {
+        localStorage.setItem(LS_AUTH_ROLE_ID, String(sessionRoleId.value))
+      } else {
+        localStorage.removeItem(LS_AUTH_ROLE_ID)
+      }
+      if (String(sessionRoleName.value || '').trim()) {
+        localStorage.setItem(LS_AUTH_ROLE_NAME, String(sessionRoleName.value).trim())
+      } else {
+        localStorage.removeItem(LS_AUTH_ROLE_NAME)
+      }
+      if (sessionSocieteId.value != null && Number(sessionSocieteId.value) > 0) {
+        localStorage.setItem(LS_AUTH_SOCIETE_ID, String(sessionSocieteId.value))
+      } else {
+        localStorage.removeItem(LS_AUTH_SOCIETE_ID)
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function hydrateAuthSessionFields() {
+    try {
+      const rid = localStorage.getItem(LS_AUTH_ROLE_ID)
+      if (rid != null && rid !== '') {
+        const n = Number(rid)
+        if (Number.isFinite(n) && n > 0) sessionRoleId.value = n
+      }
+    } catch {
+      sessionRoleId.value = null
+    }
+    try {
+      const rn = localStorage.getItem(LS_AUTH_ROLE_NAME)
+      sessionRoleName.value = rn != null ? String(rn) : ''
+    } catch {
+      sessionRoleName.value = ''
+    }
+    try {
+      const sid = localStorage.getItem(LS_AUTH_SOCIETE_ID)
+      if (sid != null && sid !== '') {
+        const n = Number(sid)
+        if (Number.isFinite(n) && n > 0) sessionSocieteId.value = n
+      }
+    } catch {
+      sessionSocieteId.value = null
+    }
+  }
+
+  function clearAuthSessionFields() {
+    sessionRoleId.value = null
+    sessionRoleName.value = ''
+    sessionSocieteId.value = null
+    try {
+      localStorage.removeItem(LS_AUTH_ROLE_ID)
+      localStorage.removeItem(LS_AUTH_ROLE_NAME)
+      localStorage.removeItem(LS_AUTH_SOCIETE_ID)
+    } catch {
+      /* ignore */
+    }
+  }
+
+  /**
+   * @param {Record<string, unknown> | null} utilisateur
+   * @param {string | null} roleSlug
+   * @param {number | null} idRoleResolved
+   * @param {string} rawRoleNom
+   */
+  function syncSessionFromResolvedUser(utilisateur, roleSlug, idRoleResolved, rawRoleNom) {
+    const idr =
+      idRoleResolved ??
+      (utilisateur ? pickIdRoleFromUser(utilisateur) : null) ??
+      null
+    if (idr != null && Number(idr) > 0) {
+      sessionRoleId.value = Number(idr)
+    } else {
+      sessionRoleId.value = null
+    }
+
+    const nameFromApi = String(rawRoleNom || '').trim()
+    const nameFromUser = utilisateur ? extractPrimaryRoleNom({ utilisateur }) : ''
+    const defNom = roleSlug ? getRoleDefinitionBySlug(roleSlug)?.nom : ''
+    sessionRoleName.value = nameFromApi || nameFromUser || defNom || ''
+
+    if (utilisateur) {
+      const sid = utilisateur.societeId ?? utilisateur.idSociete ?? utilisateur.IdSociete
+      const n = Number(sid)
+      sessionSocieteId.value = Number.isFinite(n) && n > 0 ? n : null
+    } else {
+      sessionSocieteId.value = null
+    }
+
+    persistAuthSessionFields()
+  }
 
   // GETTERS
   const isAuthenticated = computed(() => !!token.value)
+
+  /**
+   * Société « logique » (UI / contexte) : pour le super-admin, filtre optionnel persisté en local.
+   * Ne pas utiliser pour les en-têtes HTTP — voir `apiSocieteId`.
+   */
+  const effectiveSocieteId = computed(() => {
+    if (role.value === 'superadmin') {
+      const n = Number(superAdminTenantSocieteId.value)
+      return Number.isFinite(n) && n > 0 ? n : null
+    }
+    const u = user.value
+    if (!u) return null
+    const sid = u.societeId ?? u.idSociete ?? u.IdSociete
+    const n = Number(sid)
+    return Number.isFinite(n) && n > 0 ? n : null
+  })
+
+  /**
+   * societeId à envoyer sur les requêtes API : toujours absent pour Super-Admin (accès global),
+   * sinon `societeId` / `idSociete` de l’utilisateur.
+   */
+  const apiSocieteId = computed(() => {
+    if (role.value === 'superadmin') return null
+    const u = user.value
+    if (!u) return null
+    const sid = u.societeId ?? u.idSociete ?? u.IdSociete
+    const n = Number(sid)
+    return Number.isFinite(n) && n > 0 ? n : null
+  })
+
+  const roleId = computed(() => {
+    if (sessionRoleId.value != null) {
+      const sn = Number(sessionRoleId.value)
+      if (Number.isFinite(sn) && sn > 0) return sn
+    }
+    const u = user.value
+    if (!u) return null
+    const rid = u.roleId ?? u.idRole ?? u.IdRole
+    const n = Number(rid)
+    return Number.isFinite(n) && n > 0 ? n : null
+  })
+
+  const societeId = computed(() => {
+    if (sessionSocieteId.value != null) {
+      const sn = Number(sessionSocieteId.value)
+      if (Number.isFinite(sn) && sn > 0) return sn
+    }
+    const u = user.value
+    if (!u) return null
+    const sid = u.societeId ?? u.idSociete ?? u.IdSociete
+    const n = Number(sid)
+    return Number.isFinite(n) && n > 0 ? n : null
+  })
+
+  const roleName = computed(() => {
+    const s = String(sessionRoleName.value || '').trim()
+    if (s) return s
+    if (user.value) {
+      const fromUser = extractPrimaryRoleNom({ utilisateur: user.value })
+      if (fromUser) return fromUser
+    }
+    const def = getRoleDefinitionBySlug(role.value)
+    return def?.nom || ''
+  })
 
   // ACTIONS
   const loginAction = async (email, password) => {
@@ -99,15 +316,42 @@ export const useAuthStore = defineStore('auth', () => {
         const aid = idAgentFromToken(data.accessToken)
         if (aid != null) utilisateur = { ...utilisateur, idAgent: aid }
       }
+      const jwtHints = sessionHintsFromJwt(data.accessToken)
+      if (utilisateur && jwtHints) {
+        if (utilisateur.idSociete == null && jwtHints.idSociete != null) {
+          utilisateur = { ...utilisateur, idSociete: jwtHints.idSociete }
+        }
+        if (utilisateur.idRole == null && jwtHints.idRole != null) {
+          utilisateur = { ...utilisateur, idRole: jwtHints.idRole }
+        }
+      }
+      if (utilisateur) utilisateur = syncTenantFieldsOnUser(utilisateur, data)
       user.value = utilisateur
       localStorage.setItem('user', JSON.stringify(utilisateur))
 
-      // GESTION DU RÔLE avec priorité
+      const idRoleResolved =
+        pickIdRoleFromUser(utilisateur) ??
+        pickIdRoleFromAuthPayload(data) ??
+        (jwtHints?.idRole != null ? Number(jwtHints.idRole) : null)
       const rawRoleNom = extractPrimaryRoleNom(data)
-      role.value = normalizeAppRole(rawRoleNom)
+      role.value = resolveAppRoleSlug({ idRole: idRoleResolved, nom: rawRoleNom })
       localStorage.setItem('role', role.value)
 
-      console.log('Rôle API:', rawRoleNom, '→ app:', role.value)
+      syncSessionFromResolvedUser(utilisateur, role.value, idRoleResolved, rawRoleNom)
+
+      console.log('Rôle API:', rawRoleNom, 'idRole:', idRoleResolved, '→ app:', role.value)
+
+      if (role.value === 'superadmin') {
+        try {
+          const raw = localStorage.getItem(LS_SA_TENANT_SOCIETE)
+          const n = raw != null ? Number(raw) : NaN
+          if (Number.isFinite(n) && n > 0) superAdminTenantSocieteId.value = n
+        } catch {
+          superAdminTenantSocieteId.value = null
+        }
+      } else {
+        superAdminTenantSocieteId.value = null
+      }
 
       const perms = normalizePermissionsList(data.permissions)
       permissions.value = perms
@@ -160,13 +404,25 @@ export const useAuthStore = defineStore('auth', () => {
   // Méthode pour définir l'authentification (utile pour l'initialisation)
   const setAuth = (authData) => {
     token.value = authData.accessToken
-    const utilisateur =
+    let utilisateur =
       enrichUtilisateurFromAuthPayload(authData) ?? authData.utilisateur
+    if (utilisateur) utilisateur = syncTenantFieldsOnUser(utilisateur, authData)
     user.value = utilisateur
-    const r = authData.role ?? normalizeAppRole(extractPrimaryRoleNom(authData))
+    const idr =
+      pickIdRoleFromUser(utilisateur) ?? pickIdRoleFromAuthPayload(authData)
+    const r =
+      authData.role ??
+      resolveAppRoleSlug({ idRole: idr, nom: extractPrimaryRoleNom(authData) })
     role.value = r
     const perms = normalizePermissionsList(authData.permissions)
     permissions.value = perms
+
+    syncSessionFromResolvedUser(
+      utilisateur,
+      r,
+      idr,
+      extractPrimaryRoleNom(authData)
+    )
 
     localStorage.setItem('accessToken', authData.accessToken)
     localStorage.setItem('user', JSON.stringify(utilisateur))
@@ -200,6 +456,9 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('tokenType')
     localStorage.removeItem('expiresIn')
     localStorage.removeItem('agentData')
+    localStorage.removeItem(LS_SA_TENANT_SOCIETE)
+    superAdminTenantSocieteId.value = null
+    clearAuthSessionFields()
   }
 
   /**
@@ -234,7 +493,10 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const hasPermission = (permission) => {
-    return permissions.value.includes(permission)
+    if (permission == null || permission === '') return false
+    const key = String(permission)
+    if (permissions.value.includes(key)) return true
+    return roleGrantsPermissionCode(role.value, key)
   }
 
   /** Au moins une des permissions listées (codes normalisés depuis l’API). */
@@ -249,6 +511,8 @@ export const useAuthStore = defineStore('auth', () => {
 
   // Initialiser le store depuis localStorage au démarrage (F5 : session conservée tant que le JWT est présent)
   const initializeAuth = () => {
+    hydrateAuthSessionFields()
+
     const storedToken = localStorage.getItem('accessToken')
     const storedUser = localStorage.getItem('user')
     const storedRole = localStorage.getItem('role')
@@ -271,14 +535,17 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     if (token.value && !user.value && hints) {
-      user.value = {
-        email: hints.email,
-        nomComplet: hints.name,
-        idUtilisateur: hints.idUtilisateur,
-        idAgent: hints.idAgent,
-        idRole: hints.idRole,
-        idSociete: hints.idSociete,
-      }
+      user.value = syncTenantFieldsOnUser(
+        {
+          email: hints.email,
+          nomComplet: hints.name,
+          idUtilisateur: hints.idUtilisateur,
+          idAgent: hints.idAgent,
+          idRole: hints.idRole,
+          idSociete: hints.idSociete,
+        },
+        {}
+      )
       localStorage.setItem('user', JSON.stringify(user.value))
     }
 
@@ -291,22 +558,42 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     if (user.value) {
+      user.value = syncTenantFieldsOnUser(user.value, {})
+      try {
+        localStorage.setItem('user', JSON.stringify(user.value))
+      } catch {
+        /* ignore */
+      }
+    }
+
+    if (user.value) {
       const hasRoleOnUser =
         user.value?.primaryRole?.nom ||
-        (Array.isArray(user.value?.roles) && user.value.roles.length > 0)
+        (Array.isArray(user.value?.roles) && user.value.roles.length > 0) ||
+        pickIdRoleFromUser(user.value) != null
       if (hasRoleOnUser) {
-        role.value = applyRoleFromUserPayload(user.value)
+        const idr = pickIdRoleFromUser(user.value) ?? (hints?.idRole != null ? Number(hints.idRole) : null)
+        role.value = resolveAppRoleSlug({
+          idRole: idr,
+          nom: extractPrimaryRoleNom({ utilisateur: user.value }),
+        })
         localStorage.setItem('role', role.value)
       } else if (storedRole) {
         role.value = storedRole
-      } else if (hints?.roleNom) {
-        role.value = normalizeAppRole(hints.roleNom)
+      } else if (hints?.roleNom || hints?.idRole != null) {
+        role.value = resolveAppRoleSlug({
+          idRole: hints?.idRole != null ? Number(hints.idRole) : null,
+          nom: hints?.roleNom || '',
+        })
         localStorage.setItem('role', role.value)
       }
     } else if (storedRole) {
       role.value = storedRole
-    } else if (hints?.roleNom) {
-      role.value = normalizeAppRole(hints.roleNom)
+    } else if (hints?.roleNom || hints?.idRole != null) {
+      role.value = resolveAppRoleSlug({
+        idRole: hints?.idRole != null ? Number(hints.idRole) : null,
+        nom: hints?.roleNom || '',
+      })
       localStorage.setItem('role', role.value)
     }
 
@@ -351,11 +638,51 @@ export const useAuthStore = defineStore('auth', () => {
       /* ignore */
     }
 
+    if (role.value === 'superadmin') {
+      try {
+        const raw = localStorage.getItem(LS_SA_TENANT_SOCIETE)
+        const n = raw != null ? Number(raw) : NaN
+        if (Number.isFinite(n) && n > 0) superAdminTenantSocieteId.value = n
+      } catch {
+        superAdminTenantSocieteId.value = null
+      }
+    } else {
+      superAdminTenantSocieteId.value = null
+    }
+
+    if (user.value && role.value) {
+      syncSessionFromResolvedUser(
+        user.value,
+        role.value,
+        pickIdRoleFromUser(user.value),
+        extractPrimaryRoleNom({ utilisateur: user.value })
+      )
+    }
+
     console.log('Auth initialisée:', { 
       token: !!token.value, 
       role: role.value, 
       permissions: permissions.value.length 
     })
+  }
+
+  /**
+   * Super-Admin : société « focus » côté client (filtres UI). Les requêtes API restent sans societeId.
+   * @param {number | string | null | undefined} idSociete — null / 0 pour effacer.
+   */
+  function setSuperAdminTenantSocieteId(idSociete) {
+    const n = idSociete == null || idSociete === '' ? NaN : Number(idSociete)
+    if (!Number.isFinite(n) || n <= 0) {
+      superAdminTenantSocieteId.value = null
+      localStorage.removeItem(LS_SA_TENANT_SOCIETE)
+      return
+    }
+    superAdminTenantSocieteId.value = n
+    try {
+      localStorage.setItem(LS_SA_TENANT_SOCIETE, String(n))
+    } catch {
+      /* ignore */
+    }
   }
 
   /**
@@ -390,11 +717,22 @@ export const useAuthStore = defineStore('auth', () => {
           idAgent: profile.idAgent,
         }
         if (profile.roleAgent) {
-          role.value = normalizeAppRole(profile.roleAgent)
+          const idr = pickIdRoleFromUser(merged)
+          role.value = resolveAppRoleSlug({
+            idRole: idr,
+            nom: String(profile.roleAgent),
+          })
           localStorage.setItem('role', role.value)
         }
-        user.value = merged
-        localStorage.setItem('user', JSON.stringify(merged))
+        const synced = syncTenantFieldsOnUser(merged, {})
+        user.value = synced
+        localStorage.setItem('user', JSON.stringify(synced))
+        syncSessionFromResolvedUser(
+          synced,
+          role.value,
+          pickIdRoleFromUser(synced),
+          extractPrimaryRoleNom({ utilisateur: synced })
+        )
       }
 
       return profile
@@ -417,6 +755,11 @@ export const useAuthStore = defineStore('auth', () => {
     
     // Getters
     isAuthenticated,
+    effectiveSocieteId,
+    apiSocieteId,
+    societeId,
+    roleId,
+    roleName,
     
     // Actions
     login: loginAction,
@@ -426,5 +769,6 @@ export const useAuthStore = defineStore('auth', () => {
     hasPermission,
     hasAnyPermission,
     hasRole,
+    setSuperAdminTenantSocieteId,
   }
 })

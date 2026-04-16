@@ -49,9 +49,15 @@ export const apiRequest = async (url, options = {}) => {
     }
   }
 
-  if (authStore.token) {
-    headers['Authorization'] = `Bearer ${authStore.token}`
-    console.log('Token ajouté aux headers:', authStore.token.substring(0, 20) + '...')
+  const bearer = authStore.token || localStorage.getItem('accessToken')
+  if (bearer) {
+    headers['Authorization'] = `Bearer ${bearer}`
+    console.log('Token ajouté aux headers:', String(bearer).substring(0, 20) + '...')
+  }
+
+  const sid = authStore.apiSocieteId
+  if (sid != null && Number(sid) > 0) {
+    headers['X-Societe-Id'] = String(sid)
   }
 
   const config = {

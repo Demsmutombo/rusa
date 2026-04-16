@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import { fetchRoleList } from '@/services/roleService'
+import { mergeRoleCatalogWithCanonical } from '@/config/rolesConstants'
 
 const LS_KEY = 'rusa_role_catalog_v1'
 
@@ -18,7 +19,7 @@ export const useRoleCatalogStore = defineStore('roleCatalog', () => {
       const raw = localStorage.getItem(LS_KEY)
       if (raw) {
         const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) roles.value = parsed
+        if (Array.isArray(parsed)) roles.value = mergeRoleCatalogWithCanonical(parsed)
       }
     } catch {
       /* ignore */
@@ -46,7 +47,7 @@ export const useRoleCatalogStore = defineStore('roleCatalog', () => {
     lastError.value = null
     try {
       const list = await fetchRoleList(accessToken)
-      roles.value = list
+      roles.value = mergeRoleCatalogWithCanonical(Array.isArray(list) ? list : [])
       persist()
     } catch (e) {
       lastError.value = e instanceof Error ? e : new Error(String(e))

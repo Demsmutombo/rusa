@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useRoleCatalogStore } from '@/stores/roleCatalog'
-import { canAccessPrivateRoute, getDashboardPath } from '@/config/roles'
+import { getDashboardPath, verifyNavigationAccess } from '@/config/roles'
 
 const roleDashboard = () => import('../views/Dashboard/RoleDashboard.vue')
 
@@ -82,6 +82,36 @@ const router = createRouter({
       component: () => import('../views/Admin/Agents.vue'),
       meta: {
         title: 'Agents - Super-Admin - Rusa Travel',
+        requiresAuth: true,
+        roles: ['superadmin'],
+      },
+    },
+    {
+      path: '/super-admin/destinations',
+      name: 'SuperAdminDestinations',
+      component: () => import('../views/Admin/Destinations.vue'),
+      meta: {
+        title: 'Destinations - Super-Admin - Rusa Travel',
+        requiresAuth: true,
+        roles: ['superadmin'],
+      },
+    },
+    {
+      path: '/super-admin/buses',
+      name: 'SuperAdminBuses',
+      component: () => import('../views/Admin/Buses.vue'),
+      meta: {
+        title: 'Bus - Super-Admin - Rusa Travel',
+        requiresAuth: true,
+        roles: ['superadmin'],
+      },
+    },
+    {
+      path: '/super-admin/bus-types',
+      name: 'SuperAdminBusTypes',
+      component: () => import('../views/Admin/BusTypes.vue'),
+      meta: {
+        title: 'Types de bus - Super-Admin - Rusa Travel',
         requiresAuth: true,
         roles: ['superadmin'],
       },
@@ -172,6 +202,36 @@ const router = createRouter({
       component: () => import('../views/Admin/Agents.vue'),
       meta: {
         title: 'Agents - Rusa Travel',
+        requiresAuth: true,
+        adminModule: true,
+      },
+    },
+    {
+      path: '/admin/destinations',
+      name: 'AdminDestinations',
+      component: () => import('../views/Admin/Destinations.vue'),
+      meta: {
+        title: 'Destinations - Rusa Travel',
+        requiresAuth: true,
+        adminModule: true,
+      },
+    },
+    {
+      path: '/admin/buses',
+      name: 'AdminBuses',
+      component: () => import('../views/Admin/Buses.vue'),
+      meta: {
+        title: 'Bus - Rusa Travel',
+        requiresAuth: true,
+        adminModule: true,
+      },
+    },
+    {
+      path: '/admin/bus-types',
+      name: 'AdminBusTypes',
+      component: () => import('../views/Admin/BusTypes.vue'),
+      meta: {
+        title: 'Types de bus - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
       },
@@ -386,17 +446,27 @@ router.beforeEach(async (to, from, next) => {
   }
   
   const roleCatalog = useRoleCatalogStore()
-  const allowed = canAccessPrivateRoute(
+  const nav = verifyNavigationAccess(
     to,
     {
+      isAuthenticated: authStore.isAuthenticated,
       role: authStore.role,
+      societeId: authStore.societeId,
       user: authStore.user,
       hasAnyPermission: (keys) => authStore.hasAnyPermission(keys),
     },
     roleCatalog.activeRoles
   )
-  if (!allowed) {
-    console.log('Accès refusé (rôle / permissions / module admin), redirection vers /unauthorized')
+  if (!nav.allowed) {
+    if (nav.reason === 'unauthenticated') {
+      next('/signin')
+      return
+    }
+    console.log(
+      'Accès refusé:',
+      nav.reason,
+      '(rôle / société / permissions / module), redirection vers /unauthorized'
+    )
     next('/unauthorized')
     return
   }

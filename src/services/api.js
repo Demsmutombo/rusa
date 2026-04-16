@@ -21,9 +21,21 @@ class ApiClient {
     // Request interceptor to add auth token
     this.client.interceptors.request.use(
       (config) => {
-        const accessToken = localStorage.getItem('accessToken')
-        if (accessToken) {
-          config.headers.Authorization = `Bearer ${accessToken}`
+        try {
+          const authStore = useAuthStore()
+          const accessToken = authStore.token || localStorage.getItem('accessToken')
+          if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`
+          }
+          const sid = authStore.apiSocieteId
+          if (sid != null && Number(sid) > 0) {
+            config.headers['X-Societe-Id'] = String(sid)
+          }
+        } catch {
+          const accessToken = localStorage.getItem('accessToken')
+          if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`
+          }
         }
         return config
       },

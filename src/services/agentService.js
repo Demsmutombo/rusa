@@ -4,7 +4,9 @@
  */
 
 import { slugifyRoleName } from '@/config/roles'
-import { apiGet, apiPost, apiPut } from './apiService'
+import { useAuthStore } from '@/stores/auth'
+import { assertRowBelongsToUserSociete, scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
+import { apiDelete, apiGet, apiPost, apiPut } from './apiService'
 
 const JSON_ACCEPT = {
   headers: {
@@ -33,7 +35,22 @@ export async function resolveAgentForUser(idAgentHint, emailHint) {
   if (Number.isFinite(id) && id > 0) {
     try {
       const one = await getAgent(id)
-      if (one && one.idAgent != null) return one
+      if (one && one.idAgent != null) {
+        try {
+          const auth = useAuthStore()
+          if (
+            !assertRowBelongsToUserSociete(one, {
+              role: auth.role,
+              societeId: auth.societeId,
+            })
+          ) {
+            return null
+          }
+        } catch {
+          /* Pinia non prêt */
+        }
+        return one
+      }
     } catch {
       /* API peut n’exposer que GET /api/Agent (collection) */
     }
@@ -213,7 +230,17 @@ export function listAgents() {
 
 export async function listAgentsArray() {
   const raw = await listAgents()
-  return unwrapAgentList(raw)
+  let list = unwrapAgentList(raw)
+  try {
+    const auth = useAuthStore()
+    list = scopeEntitiesToUserSociete(list, {
+      role: auth.role,
+      societeId: auth.societeId,
+    })
+  } catch {
+    /* Pinia non prêt */
+  }
+  return list
 }
 
 export function getAgent(id) {
@@ -269,6 +296,14 @@ export function updateAgent(id, body) {
   return apiPut(`/api/Agent/${id}`, normalizeAgentUpdate(body))
 }
 
+export function deleteAgent(id) {
+  const nid = Number(id)
+  if (!Number.isFinite(nid) || nid <= 0) {
+    return Promise.reject(new Error('Identifiant agent invalide.'))
+  }
+  return apiDelete(`/api/Agent/${nid}`, JSON_ACCEPT)
+}
+
 /** Filtre côté client par société (si le GET ne supporte pas de query) */
 export async function listAgentsBySociete(idSociete) {
   const sid = Number(idSociete)
@@ -285,6 +320,7 @@ export const agentService = {
   getById: getAgent,
   create: createAgent,
   update: updateAgent,
+  delete: deleteAgent,
   setStatut: setAgentStatut,
   toggleStatut: toggleAgentStatut,
   listBySociete: listAgentsBySociete,

@@ -3,6 +3,8 @@
  * Base URL relative /api (proxy Vite ou même origine en prod).
  */
 
+import { useAuthStore } from '@/stores/auth'
+import { scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
 import { apiGet, apiPost, apiPut, apiDelete } from './apiService'
 
 /**
@@ -40,6 +42,22 @@ export function slugFromIdRole(idRole) {
 }
 
 /** Extrait un tableau d'utilisateurs depuis divers formats de réponse paginée. */
+/**
+ * Filtre une liste utilisateurs déjà extraite (ex. après `unwrapUtilisateurList`).
+ * @param {unknown[]} items
+ */
+export function filterUtilisateursForCurrentSociete(items) {
+  try {
+    const auth = useAuthStore()
+    return scopeEntitiesToUserSociete(items, {
+      role: auth.role,
+      societeId: auth.societeId,
+    })
+  } catch {
+    return Array.isArray(items) ? items : []
+  }
+}
+
 export function unwrapUtilisateurList(data) {
   if (!data) return { items: [], totalCount: 0 }
   if (Array.isArray(data)) return { items: data, totalCount: data.length }

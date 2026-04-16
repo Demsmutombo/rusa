@@ -249,6 +249,7 @@ import {
   listUtilisateurs,
   listUtilisateursByRoleId,
   unwrapUtilisateurList,
+  filterUtilisateursForCurrentSociete,
   mapUtilisateurToRow,
   createUtilisateur,
   updateUtilisateur,
@@ -298,9 +299,10 @@ async function loadUsers() {
     } else {
       raw = await listUtilisateurs({ page: page.value, pageSize: pageSize.value })
     }
-    const { items, totalCount: total } = unwrapUtilisateurList(raw)
-    users.value = items.map(mapUtilisateurToRow)
-    totalCount.value = total
+    const { items } = unwrapUtilisateurList(raw)
+    const scoped = filterUtilisateursForCurrentSociete(items)
+    users.value = scoped.map(mapUtilisateurToRow)
+    totalCount.value = scoped.length
   } catch (e) {
     listError.value = e?.message || 'Impossible de charger les utilisateurs'
     users.value = []

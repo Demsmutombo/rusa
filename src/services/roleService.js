@@ -1,4 +1,5 @@
 import { resolveApiUrl } from '@/config/apiOrigin'
+import { useAuthStore } from '@/stores/auth'
 
 async function readBody(response) {
   const text = await response.text()
@@ -20,8 +21,20 @@ export async function fetchRoleList(accessToken) {
     // Aligné Swagger (souvent text/plain) + JSON pour les implémentations qui négocient le type
     Accept: 'text/plain, application/json;q=0.9, */*;q=0.8',
   }
-  if (accessToken) {
-    headers.Authorization = `Bearer ${accessToken}`
+  try {
+    const auth = useAuthStore()
+    const bearer = auth.token || accessToken
+    if (bearer) {
+      headers.Authorization = `Bearer ${bearer}`
+    }
+    const sid = auth.apiSocieteId
+    if (sid != null && Number(sid) > 0) {
+      headers['X-Societe-Id'] = String(sid)
+    }
+  } catch {
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`
+    }
   }
   const response = await fetch(resolveApiUrl('/api/Role'), {
     method: 'GET',

@@ -1,7 +1,11 @@
 <template>
-  <div class="min-h-screen">
-    <!-- Navigation -->
-    <nav class="sticky top-0 z-50 border-b border-primary-100 bg-white/95 shadow-md backdrop-blur-sm">
+  <div
+    class="min-h-screen bg-gray-50 text-gray-900 dark:bg-[#121212] dark:text-gray-100"
+  >
+    <!-- Navigation (style app sombre) -->
+    <nav
+      class="sticky top-0 z-50 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur-sm dark:border-gray-800 dark:bg-[#121212]/95 dark:shadow-none"
+    >
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <div class="flex items-center">
@@ -11,41 +15,43 @@
                 alt="Rusa Travel" 
                 class="w-16 h-16 object-contain"
               />
-              <h1 class="text-2xl font-bold text-primary-600">Rusa Travel</h1>
+              <h1 class="text-2xl font-bold text-primary-600 dark:text-primary-400">Rusa Travel</h1>
             </div>
           </div>
           
           <!-- Desktop Menu -->
           <div class="hidden md:flex items-center space-x-8">
-            <a href="#accueil" class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition">Accueil</a>
-            <a href="#destinations" class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition">Destinations</a>
-            <a href="#search" class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition">Rechercher</a>
-            <a href="#about" class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition">À propos</a>
-            <a href="#contact" class="text-gray-700 hover:text-primary-600 px-3 py-2 text-sm font-medium transition">Contact</a>
+            <a href="#accueil" class="text-gray-700 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium transition">Accueil</a>
+            <a href="#destinations" class="text-gray-700 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium transition">Destinations</a>
+            <a href="#search" class="text-gray-700 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium transition">Rechercher</a>
+            <a href="#about" class="text-gray-700 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium transition">À propos</a>
+            <a href="#contact" class="text-gray-700 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-400 px-3 py-2 text-sm font-medium transition">Contact</a>
           </div>
           
           <!-- Desktop Auth Buttons -->
-          <div class="hidden md:flex items-center space-x-4">
+          <div class="hidden md:flex items-center gap-3 sm:gap-4">
+            <ThemeToggler />
             <router-link
               to="/signin"
-              class="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium transition"
+              class="text-gray-700 hover:text-primary-600 dark:text-gray-200 dark:hover:text-primary-400 px-3 py-2 rounded-md text-sm font-medium transition"
             >
               Connexion
             </router-link>
             <router-link
               to="/signup"
-              class="bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-700 transition"
+              class="bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition"
             >
               S'inscrire
             </router-link>
           </div>
           
           <!-- Mobile Menu Button -->
-          <div class="md:hidden flex items-center">
+          <div class="md:hidden flex items-center gap-2">
+            <ThemeToggler />
             <!-- Mobile Hamburger Menu -->
             <button
               @click="toggleMobileNav"
-              class="p-2 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-100 transition"
+              class="p-2 rounded-md text-gray-700 hover:text-primary-600 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-primary-400 transition"
             >
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -55,25 +61,25 @@
         </div>
         
         <!-- Mobile Navigation Menu -->
-        <div 
+        <div
           v-if="mobileNavOpen"
-          class="md:hidden bg-white border-t border-gray-200"
+          class="md:hidden border-t border-gray-200 bg-white dark:border-gray-800 dark:bg-[#1E1E1E]"
         >
           <div class="px-2 pt-2 pb-3 space-y-1">
-            <a href="#accueil" @click="closeMobileNav" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition">Accueil</a>
-            <a href="#destinations" @click="closeMobileNav" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition">Destinations</a>
-            <a href="#search" @click="closeMobileNav" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition">Rechercher</a>
-            <a href="#about" @click="closeMobileNav" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition">À propos</a>
-            <a href="#contact" @click="closeMobileNav" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition">Contact</a>
+            <a href="#accueil" @click="closeMobileNav" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-primary-400 transition">Accueil</a>
+            <a href="#destinations" @click="closeMobileNav" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-primary-400 transition">Destinations</a>
+            <a href="#search" @click="closeMobileNav" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-primary-400 transition">Rechercher</a>
+            <a href="#about" @click="closeMobileNav" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-primary-400 transition">À propos</a>
+            <a href="#contact" @click="closeMobileNav" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-primary-400 transition">Contact</a>
             
             <!-- Séparateur -->
-            <div class="border-t border-gray-200 pt-2 mt-2"></div>
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-2 mt-2"></div>
             
             <!-- Boutons Connexion/Inscription -->
             <router-link
               to="/signin"
               @click="closeMobileNav"
-              class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 transition"
+              class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-primary-400 transition"
             >
               <div class="flex items-center space-x-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -85,7 +91,7 @@
             <router-link
               to="/signup"
               @click="closeMobileNav"
-              class="block px-3 py-2 rounded-md text-base font-medium bg-primary-600 text-white hover:bg-primary-700 transition"
+              class="block px-3 py-2 rounded-md text-base font-medium bg-primary-600 text-white hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600 transition"
             >
               <div class="flex items-center space-x-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,80 +105,168 @@
       </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section ref="heroRef" id="accueil" class="relative min-h-screen flex items-center justify-center overflow-hidden">
-      <!-- Background avec gradient moderne -->
-      <div class="absolute inset-0 bg-gradient-to-br from-primary-600 via-primary-500 to-primary-400">
-        <div class="absolute inset-0 bg-black/20"></div>
-      </div>
-      
-      <!-- Particules animées -->
-      <div class="absolute inset-0">
-        <div class="absolute top-20 left-10 w-72 h-72 bg-brand-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse parallax" data-speed="0.3"></div>
-        <div class="absolute top-40 right-10 w-96 h-96 bg-primary-300/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse animation-delay-2000 parallax" data-speed="0.4"></div>
-        <div class="absolute bottom-20 left-1/2 w-80 h-80 bg-brand-300/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse animation-delay-4000 parallax" data-speed="0.2"></div>
-      </div>
-      
-      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white">
-        <div class="animate-fade-in-up">
-          <h2 class="text-6xl md:text-7xl font-bold mb-6">
-            Transport de voyage
-          </h2>
-          <p class="text-2xl md:text-3xl mb-6 max-w-4xl mx-auto font-light">
-            Voyagez en toute sécurité avec <span class="font-bold text-primary-50">Rusa Travel</span>
-          </p>
-          <p class="text-lg md:text-xl mb-12 max-w-3xl mx-auto text-primary-50">
-            La plateforme de transport la plus fiable de la République Démocratique du Congo
-          </p>
-          
-          <div class="flex flex-col sm:flex-row justify-center gap-6">
-            <button class="group relative px-10 py-4 bg-white text-brand-500 rounded-full font-bold text-lg hover:bg-gray-50 transform hover:scale-105 transition-all duration-300 shadow-2xl">
-              <span class="relative z-10 transition-colors duration-300 group-hover:text-white">Réserver maintenant</span>
-              <div class="absolute inset-0 bg-gradient-to-r from-brand-400 to-brand-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-            </button>
-            <router-link
-              to="/signin"
-              class="group px-10 py-4 border-2 border-white text-white rounded-full font-bold text-lg hover:bg-white hover:text-brand-500 transform hover:scale-105 transition-all duration-300"
+    <!-- Hero — carrousel (fond aligné sur le thème sombre : gray-950, fondu bas → section suivante) -->
+    <section
+      ref="heroRef"
+      id="accueil"
+      class="relative min-h-[100dvh] overflow-hidden bg-gray-950 pb-3 text-white"
+    >
+      <div
+        class="pointer-events-none absolute inset-x-0 bottom-0 z-[15] h-56 bg-gradient-to-b from-transparent from-[28%] via-gray-950/25 via-[55%] to-gray-50 sm:h-64 sm:from-[22%] dark:via-gray-950/50 dark:via-[50%] dark:to-gray-900"
+        aria-hidden="true"
+      />
+      <div
+        class="hero-carousel-pagination pointer-events-auto absolute bottom-[4.5rem] left-0 right-0 z-20 flex items-center justify-center gap-2 sm:bottom-20"
+        aria-hidden="true"
+      />
+      <Swiper
+        class="home-hero-swiper home-hero-swiper--fade relative z-0 h-[calc(100dvh-1.25rem)] min-h-[calc(100dvh-1.25rem)] sm:h-[calc(100dvh-1.5rem)] sm:min-h-[calc(100dvh-1.5rem)]"
+        :modules="swiperModules"
+        effect="fade"
+        :fade-effect="heroFadeEffect"
+        :slides-per-view="1"
+        :loop="homeHeroSlides.length > 1"
+        :speed="1400"
+        :autoplay="heroAutoplay"
+        :touch-start-prevent-default="false"
+        :pagination="{ el: '.hero-carousel-pagination', clickable: true }"
+      >
+        <SwiperSlide v-for="(slide, index) in homeHeroSlides" :key="index">
+          <div class="relative h-full min-h-[calc(100dvh-1.25rem)] w-full overflow-hidden sm:min-h-[calc(100dvh-1.5rem)]">
+            <div class="hero-slide-img pointer-events-none absolute inset-0 z-0 overflow-hidden">
+              <img
+                :src="slide.image"
+                :alt="
+                  slide.title ||
+                  (slide.titleLines ? slide.titleLines.join(' ') : 'Rusa Travel')
+                "
+                draggable="false"
+                class="hero-slide-img__media pointer-events-none h-full w-full select-none object-cover"
+                loading="eager"
+              />
+            </div>
+            <div
+              class="pointer-events-none absolute inset-0 z-[1] bg-gradient-to-b from-gray-950/70 via-gray-950/45 to-gray-950/90"
+              aria-hidden="true"
+            />
+            <div
+              class="pointer-events-none relative z-10 flex h-full min-h-[calc(100dvh-1.25rem)] w-full flex-col pt-16 sm:min-h-[calc(100dvh-1.5rem)] sm:pt-20"
             >
-              Connexion
-            </router-link>
+              <div
+                class="flex min-h-0 flex-1 flex-col items-center justify-center px-6 pb-24 pt-24 text-center sm:px-10 sm:pb-28 sm:pt-28 md:pt-36"
+              >
+                <div class="pointer-events-auto w-full max-w-4xl">
+                  <h2
+                    v-if="slide.titleLines && slide.titleLines.length"
+                    class="mx-auto w-full max-w-full text-2xl font-bold leading-tight tracking-tight text-white drop-shadow-md sm:text-4xl md:text-5xl lg:text-6xl"
+                  >
+                    <span
+                      class="inline-block max-w-full overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                    >
+                      {{ slide.titleLines.join(' ') }}
+                    </span>
+                  </h2>
+                  <h2
+                    v-else-if="slide.title"
+                    class="mx-auto w-full max-w-full text-3xl font-bold leading-tight text-white drop-shadow-md sm:text-4xl md:text-5xl lg:text-6xl"
+                  >
+                    <span
+                      class="inline-block max-w-full overflow-x-auto whitespace-nowrap [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+                    >
+                      {{ slide.title }}
+                    </span>
+                  </h2>
+                  <p
+                    class="mx-auto mt-4 max-w-3xl text-lg leading-relaxed text-gray-100/95 sm:mt-6 sm:text-xl md:text-2xl"
+                  >
+                    {{ slide.subtitle }}
+                  </p>
+                  <div
+                    class="mt-8 flex flex-col items-stretch justify-center gap-4 sm:mt-10 sm:flex-row sm:items-center sm:gap-5"
+                  >
+                    <a
+                      href="#search"
+                      class="group relative inline-flex min-h-[3rem] items-center justify-center overflow-hidden rounded-full bg-primary-500 px-9 py-3.5 text-center text-base font-bold text-white shadow-xl drop-shadow-sm transition duration-300 hover:bg-primary-600 sm:min-h-0 sm:px-11 sm:py-4 sm:text-lg"
+                    >
+                      <span class="relative z-10">Réserver maintenant</span>
+                    </a>
+                    <router-link
+                      to="/signin"
+                      class="inline-flex min-h-[3rem] items-center justify-center rounded-full border-2 border-white px-9 py-3.5 text-center text-base font-bold text-white shadow-lg backdrop-blur-sm transition duration-300 hover:bg-white hover:text-gray-900 sm:min-h-0 sm:px-11 sm:py-4 sm:text-lg"
+                    >
+                      Connexion
+                    </router-link>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-      
-      <!-- Scroll indicator -->
-      <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce">
-        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        </SwiperSlide>
+      </Swiper>
+
+      <div class="pointer-events-none absolute bottom-2 left-1/2 z-20 -translate-x-1/2 animate-bounce sm:bottom-3">
+        <svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
         </svg>
       </div>
     </section>
 
-    <!-- Search Section -->
-    <section ref="searchRef" id="search" class="py-20 bg-gradient-to-b from-gray-50 to-white relative">
-      <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-          <h3 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-600">
+    <!-- Recherche — carte type app (fond #1E1E1E, séparateurs pointillés) -->
+    <section
+      ref="searchRef"
+      id="search"
+      class="relative bg-gradient-to-b from-gray-100 to-white py-16 dark:from-[#121212] dark:to-[#121212] sm:py-20"
+    >
+      <div class="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mb-10 text-center md:mb-12">
+          <h3 class="mb-3 text-3xl font-bold tracking-tight text-gray-900 md:text-4xl dark:text-white">
             Commencez à rêver
           </h3>
-          <p class="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-            Aventure ou immersion culturelle ? Explorer les villes vibrantes du Congo ou les paysages spectaculaires ? 
-            <span class="font-semibold text-primary-600">Rusa Travel</span> a sélectionné le meilleur de ce que nos destinations ont à offrir.
+          <p class="mx-auto max-w-3xl text-base leading-relaxed text-gray-600 md:text-lg dark:text-gray-400">
+            Aventure ou immersion culturelle ? Explorez le Congo avec
+            <span class="font-semibold text-primary-600 dark:text-primary-400">Rusa Travel</span>
+            — le meilleur de nos destinations.
           </p>
         </div>
 
-        <div class="max-w-5xl mx-auto">
-          <div class="bg-white rounded-2xl shadow-2xl p-8 md:p-12 border border-gray-100">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-end">
+        <div class="mx-auto max-w-5xl">
+          <div
+            class="home-app-card overflow-hidden rounded-[1.75rem] border border-gray-200 bg-white shadow-xl dark:border-gray-800 dark:bg-[#1E1E1E] dark:shadow-none"
+          >
+            <div class="border-b border-dashed border-gray-200 px-6 py-5 dark:border-gray-700 md:px-8">
+              <p class="text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-500">
+                Recherche de trajet
+              </p>
+              <p class="mt-1 text-lg font-bold text-gray-900 dark:text-white">Où allez-vous ?</p>
+            </div>
+            <div class="grid grid-cols-1 items-end gap-6 p-6 md:grid-cols-12 md:gap-6 md:p-8">
               <div class="md:col-span-3">
-                <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  <svg class="w-4 h-4 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+                <label
+                  class="mb-2 flex items-center text-sm font-medium text-gray-500 dark:text-gray-400"
+                >
+                  <span
+                    class="mr-2 flex h-8 w-8 items-center justify-center rounded-xl bg-primary-500/15 text-primary-600 dark:text-primary-400"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  </span>
                   Départ
                 </label>
-                <select class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 text-gray-700 font-medium">
+                <select
+                  class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm font-medium text-gray-900 transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-gray-700 dark:bg-[#2A2A2A] dark:text-white"
+                >
                   <option>Choisissez votre ville</option>
                   <option>Kinshasa</option>
                   <option>Lubumbashi</option>
@@ -180,16 +274,34 @@
                   <option>Kisangani</option>
                 </select>
               </div>
-              
+
               <div class="md:col-span-3">
-                <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  <svg class="w-4 h-4 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+                <label
+                  class="mb-2 flex items-center text-sm font-medium text-gray-500 dark:text-gray-400"
+                >
+                  <span
+                    class="mr-2 flex h-8 w-8 items-center justify-center rounded-xl bg-primary-500/15 text-primary-600 dark:text-primary-400"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                      />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  </span>
                   Destination
                 </label>
-                <select class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 text-gray-700 font-medium">
+                <select
+                  class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm font-medium text-gray-900 transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-gray-700 dark:bg-[#2A2A2A] dark:text-white"
+                >
                   <option>Choisissez votre destination</option>
                   <option>Kinshasa</option>
                   <option>Lubumbashi</option>
@@ -197,27 +309,50 @@
                   <option>Kisangani</option>
                 </select>
               </div>
-              
+
               <div class="md:col-span-3">
-                <label class="block text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                  <svg class="w-4 h-4 mr-2 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+                <label
+                  class="mb-2 flex items-center text-sm font-medium text-gray-500 dark:text-gray-400"
+                >
+                  <span
+                    class="mr-2 flex h-8 w-8 items-center justify-center rounded-xl bg-primary-500/15 text-primary-600 dark:text-primary-400"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </span>
                   Date
                 </label>
                 <input
                   type="date"
-                  class="w-full px-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200 text-gray-700 font-medium"
-                  placeholder="mm/dd/yyyy"
+                  class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm font-medium text-gray-900 transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/30 dark:border-gray-700 dark:bg-[#2A2A2A] dark:text-white"
                 />
               </div>
-              
+
               <div class="md:col-span-3">
-                <button type="button" class="group flex w-full transform items-center justify-center rounded-xl bg-[linear-gradient(135deg,var(--color-500),var(--color-800))] px-8 py-4 font-bold text-white shadow-lg transition-all duration-200 ease-in-out hover:-translate-y-0.5 hover:shadow-xl">
-                  <svg class="w-5 h-5 mr-3 group-hover:rotate-12 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <button
+                  type="button"
+                  class="group flex w-full items-center justify-center rounded-2xl bg-primary-500 px-6 py-4 text-sm font-bold text-gray-950 shadow-lg transition hover:bg-primary-600 dark:text-gray-950"
+                >
+                  <svg
+                    class="mr-2 h-5 w-5 transition-transform group-hover:scale-110"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
-                  Rechercher votre trajet
+                  Rechercher
                 </button>
               </div>
             </div>
@@ -226,165 +361,205 @@
       </div>
     </section>
 
-    <!-- Popular Destinations -->
-    <section ref="destinationsRef" id="destinations" class="py-20 bg-gray-50">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-          <h3 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6 bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-primary-800">
-            Destinations Populaires
-          </h3>
-          <p class="text-xl text-gray-600 max-w-4xl mx-auto">
-            Découvrez nos destinations les plus prisées et commencez à planifier votre prochaine aventure
-          </p>
+    <!-- Destinations — cartes type « prochains départs » (icône bus, badge, turquoise) -->
+    <section
+      ref="destinationsRef"
+      id="destinations"
+      class="border-t border-dashed border-gray-200 py-16 dark:border-gray-800 dark:bg-[#121212] sm:py-20"
+    >
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mb-10 flex flex-col items-start justify-between gap-4 sm:mb-12 sm:flex-row sm:items-center">
+          <div>
+            <h3 class="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl dark:text-white">
+              Destinations populaires
+            </h3>
+            <p class="mt-1 max-w-2xl text-sm text-gray-600 dark:text-gray-400">
+              Tarifs indicatifs et fréquences — style aligné sur l’app mobile Rusa Travel.
+            </p>
+          </div>
+          <span
+            class="inline-flex items-center gap-2 rounded-full border border-gray-300 px-4 py-2 text-sm text-gray-600 dark:border-gray-700 dark:text-gray-400"
+          >
+            <svg class="h-5 w-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"
+              />
+            </svg>
+            Carte
+          </span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 lg:gap-5">
           <!-- Kinshasa -->
-          <div class="destination-card group relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
-            <div class="absolute top-4 right-4 z-10">
-              <span class="bg-primary-600 text-white px-3 py-1 rounded-full text-xs font-bold">POPULAIRE</span>
-            </div>
-            <div class="h-56 bg-gradient-to-br from-primary-500 to-primary-800 relative overflow-hidden">
-              <div class="absolute inset-0 bg-black opacity-20"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="text-center text-white">
-                  <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-sm">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <h4 class="text-2xl font-bold mb-1">Kinshasa</h4>
-                  <p class="text-sm opacity-90">Capitale vibrante</p>
-                </div>
+          <div
+            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-[#1E1E1E] dark:hover:border-primary-500/30"
+          >
+            <div
+              class="flex items-center gap-4 border-b border-dashed border-gray-200 p-5 dark:border-gray-700"
+            >
+              <div
+                class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-500/20 text-primary-600 dark:text-primary-400"
+              >
+                <svg class="h-7 w-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M4 16c0 .88.39 1.67 1 2.2V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.8c.61-.53 1-1.32 1-2.2V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V7h12v4z"
+                  />
+                </svg>
               </div>
+              <div class="min-w-0 flex-1">
+                <h4 class="text-lg font-bold text-gray-900 dark:text-white">Kinshasa</h4>
+                <p class="truncate text-sm text-gray-500 dark:text-gray-400">Capitale • Bus VIP</p>
+              </div>
+              <span
+                class="shrink-0 rounded-full border border-primary-500 px-2.5 py-1 text-xs font-semibold text-primary-600 dark:text-primary-400"
+              >
+                Populaire
+              </span>
             </div>
-            <div class="p-6">
-              <div class="flex items-center justify-between mb-4">
+            <div class="space-y-4 p-5">
+              <div class="flex items-end justify-between border-b border-dashed border-gray-200 pb-4 dark:border-gray-700">
                 <div>
-                  <p class="text-sm text-gray-500 mb-1">À partir de</p>
-                  <p class="text-3xl font-bold text-primary-600">50,000 FC</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-500">À partir de</p>
+                  <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">50 000 FC</p>
                 </div>
-                <div class="text-right">
-                  <div class="flex items-center text-gray-600 mb-1">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="text-sm">12 départs/jour</span>
-                  </div>
-                </div>
+                <p class="text-right text-xs text-gray-500 dark:text-gray-400">12 départs / jour</p>
               </div>
-              <button class="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-primary-600 hover:text-white transition-all duration-300 group-hover:bg-primary-600 group-hover:text-white">
+              <button
+                type="button"
+                class="w-full rounded-2xl border border-gray-200 py-3 text-sm font-semibold text-gray-800 transition hover:border-primary-500 hover:bg-primary-500/10 dark:border-gray-700 dark:text-white dark:hover:border-primary-500 dark:hover:bg-primary-500/10"
+              >
                 Voir les trajets
               </button>
             </div>
           </div>
 
           <!-- Lubumbashi -->
-          <div class="destination-card group relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
-            <div class="h-56 bg-gradient-to-br from-green-500 to-green-700 relative overflow-hidden">
-              <div class="absolute inset-0 bg-black opacity-20"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="text-center text-white">
-                  <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-sm">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <h4 class="text-2xl font-bold mb-1">Lubumbashi</h4>
-                  <p class="text-sm opacity-90">Capitale minière</p>
-                </div>
+          <div
+            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-[#1E1E1E] dark:hover:border-primary-500/30"
+          >
+            <div
+              class="flex items-center gap-4 border-b border-dashed border-gray-200 p-5 dark:border-gray-700"
+            >
+              <div
+                class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-500/20 text-primary-600 dark:text-primary-400"
+              >
+                <svg class="h-7 w-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M4 16c0 .88.39 1.67 1 2.2V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.8c.61-.53 1-1.32 1-2.2V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V7h12v4z"
+                  />
+                </svg>
               </div>
+              <div class="min-w-0 flex-1">
+                <h4 class="text-lg font-bold text-gray-900 dark:text-white">Lubumbashi</h4>
+                <p class="truncate text-sm text-gray-500 dark:text-gray-400">Sud • Bus confort</p>
+              </div>
+              <span
+                class="shrink-0 rounded-full border border-amber-500/80 px-2.5 py-1 text-xs font-semibold text-amber-600 dark:text-amber-400"
+              >
+                Actif
+              </span>
             </div>
-            <div class="p-6">
-              <div class="flex items-center justify-between mb-4">
+            <div class="space-y-4 p-5">
+              <div class="flex items-end justify-between border-b border-dashed border-gray-200 pb-4 dark:border-gray-700">
                 <div>
-                  <p class="text-sm text-gray-500 mb-1">À partir de</p>
-                  <p class="text-3xl font-bold text-primary-600">170,000 FC</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-500">À partir de</p>
+                  <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">170 000 FC</p>
                 </div>
-                <div class="text-right">
-                  <div class="flex items-center text-gray-600 mb-1">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="text-sm">6 départs/jour</span>
-                  </div>
-                </div>
+                <p class="text-right text-xs text-gray-500 dark:text-gray-400">6 départs / jour</p>
               </div>
-              <button class="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-primary-600 hover:text-white transition-all duration-300 group-hover:bg-primary-600 group-hover:text-white">
+              <button
+                type="button"
+                class="w-full rounded-2xl border border-gray-200 py-3 text-sm font-semibold text-gray-800 transition hover:border-primary-500 hover:bg-primary-500/10 dark:border-gray-700 dark:text-white dark:hover:border-primary-500 dark:hover:bg-primary-500/10"
+              >
                 Voir les trajets
               </button>
             </div>
           </div>
 
           <!-- Goma -->
-          <div class="destination-card group relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
-            <div class="h-56 bg-gradient-to-br from-purple-500 to-purple-700 relative overflow-hidden">
-              <div class="absolute inset-0 bg-black opacity-20"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="text-center text-white">
-                  <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-sm">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <h4 class="text-2xl font-bold mb-1">Goma</h4>
-                  <p class="text-sm opacity-90">Ville lacustre</p>
-                </div>
+          <div
+            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-[#1E1E1E] dark:hover:border-primary-500/30"
+          >
+            <div
+              class="flex items-center gap-4 border-b border-dashed border-gray-200 p-5 dark:border-gray-700"
+            >
+              <div
+                class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-500/20 text-primary-600 dark:text-primary-400"
+              >
+                <svg class="h-7 w-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M4 16c0 .88.39 1.67 1 2.2V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.8c.61-.53 1-1.32 1-2.2V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V7h12v4z"
+                  />
+                </svg>
               </div>
+              <div class="min-w-0 flex-1">
+                <h4 class="text-lg font-bold text-gray-900 dark:text-white">Goma</h4>
+                <p class="truncate text-sm text-gray-500 dark:text-gray-400">Est • Lac Kivu</p>
+              </div>
+              <span
+                class="shrink-0 rounded-full border border-sky-500/80 px-2.5 py-1 text-xs font-semibold text-sky-600 dark:text-sky-400"
+              >
+                Bientôt
+              </span>
             </div>
-            <div class="p-6">
-              <div class="flex items-center justify-between mb-4">
+            <div class="space-y-4 p-5">
+              <div class="flex items-end justify-between border-b border-dashed border-gray-200 pb-4 dark:border-gray-700">
                 <div>
-                  <p class="text-sm text-gray-500 mb-1">À partir de</p>
-                  <p class="text-3xl font-bold text-primary-600">130,000 FC</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-500">À partir de</p>
+                  <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">130 000 FC</p>
                 </div>
-                <div class="text-right">
-                  <div class="flex items-center text-gray-600 mb-1">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="text-sm">4 départs/jour</span>
-                  </div>
-                </div>
+                <p class="text-right text-xs text-gray-500 dark:text-gray-400">4 départs / jour</p>
               </div>
-              <button class="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-primary-600 hover:text-white transition-all duration-300 group-hover:bg-primary-600 group-hover:text-white">
+              <button
+                type="button"
+                class="w-full rounded-2xl border border-gray-200 py-3 text-sm font-semibold text-gray-800 transition hover:border-primary-500 hover:bg-primary-500/10 dark:border-gray-700 dark:text-white dark:hover:border-primary-500 dark:hover:bg-primary-500/10"
+              >
                 Voir les trajets
               </button>
             </div>
           </div>
 
           <!-- Kisangani -->
-          <div class="destination-card group relative bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300">
-            <div class="h-56 bg-gradient-to-br from-orange-500 to-orange-700 relative overflow-hidden">
-              <div class="absolute inset-0 bg-black opacity-20"></div>
-              <div class="absolute inset-0 flex items-center justify-center">
-                <div class="text-center text-white">
-                  <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3 backdrop-blur-sm">
-                    <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd" />
-                    </svg>
-                  </div>
-                  <h4 class="text-2xl font-bold mb-1">Kisangani</h4>
-                  <p class="text-sm opacity-90">Cité de Stanley</p>
-                </div>
+          <div
+            class="destination-card group rounded-3xl border border-gray-200 bg-white shadow-md transition hover:border-primary-500/40 hover:shadow-lg dark:border-gray-800 dark:bg-[#1E1E1E] dark:hover:border-primary-500/30"
+          >
+            <div
+              class="flex items-center gap-4 border-b border-dashed border-gray-200 p-5 dark:border-gray-700"
+            >
+              <div
+                class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-primary-500/20 text-primary-600 dark:text-primary-400"
+              >
+                <svg class="h-7 w-7" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M4 16c0 .88.39 1.67 1 2.2V20c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h8v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1.8c.61-.53 1-1.32 1-2.2V6c0-3.5-3.58-4-8-4s-8 .5-8 4v10zm3.5 1c-.83 0-1.5-.67-1.5-1.5S6.67 14 7.5 14s1.5.67 1.5 1.5S8.33 17 7.5 17zm9 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm1.5-6H6V7h12v4z"
+                  />
+                </svg>
               </div>
+              <div class="min-w-0 flex-1">
+                <h4 class="text-lg font-bold text-gray-900 dark:text-white">Kisangani</h4>
+                <p class="truncate text-sm text-gray-500 dark:text-gray-400">Nord • Fleuve</p>
+              </div>
+              <span
+                class="shrink-0 rounded-full border border-gray-400 px-2.5 py-1 text-xs font-semibold text-gray-600 dark:border-gray-600 dark:text-gray-400"
+              >
+                Stable
+              </span>
             </div>
-            <div class="p-6">
-              <div class="flex items-center justify-between mb-4">
+            <div class="space-y-4 p-5">
+              <div class="flex items-end justify-between border-b border-dashed border-gray-200 pb-4 dark:border-gray-700">
                 <div>
-                  <p class="text-sm text-gray-500 mb-1">À partir de</p>
-                  <p class="text-3xl font-bold text-primary-600">110,000 FC</p>
+                  <p class="text-xs text-gray-500 dark:text-gray-500">À partir de</p>
+                  <p class="text-2xl font-bold text-primary-600 dark:text-primary-400">110 000 FC</p>
                 </div>
-                <div class="text-right">
-                  <div class="flex items-center text-gray-600 mb-1">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span class="text-sm">5 départs/jour</span>
-                  </div>
-                </div>
+                <p class="text-right text-xs text-gray-500 dark:text-gray-400">5 départs / jour</p>
               </div>
-              <button class="w-full bg-gray-100 text-gray-700 py-3 rounded-xl font-semibold hover:bg-primary-600 hover:text-white transition-all duration-300 group-hover:bg-primary-600 group-hover:text-white">
+              <button
+                type="button"
+                class="w-full rounded-2xl border border-gray-200 py-3 text-sm font-semibold text-gray-800 transition hover:border-primary-500 hover:bg-primary-500/10 dark:border-gray-700 dark:text-white dark:hover:border-primary-500 dark:hover:bg-primary-500/10"
+              >
                 Voir les trajets
               </button>
             </div>
@@ -393,97 +568,173 @@
       </div>
     </section>
 
-    <!-- Why Choose Us -->
-    <section ref="featuresRef" id="about" class="py-16 bg-gray-50">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-16">
-          <h3 class="text-3xl font-bold text-gray-900 mb-4">Pourquoi choisir Rusa Travel?</h3>
-          <p class="text-lg text-gray-600">Votre partenaire de confiance pour tous vos voyages en République Démocratique du Congo</p>
+    <!-- Pourquoi nous — cartes type « méthode de paiement » -->
+    <section
+      ref="featuresRef"
+      id="about"
+      class="border-t border-dashed border-gray-200 py-16 dark:border-gray-800 dark:bg-[#121212] sm:py-20"
+    >
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="mb-10 text-center md:mb-12">
+          <h3 class="text-2xl font-bold text-gray-900 md:text-3xl dark:text-white">
+            Pourquoi choisir Rusa Travel ?
+          </h3>
+          <p class="mt-2 text-sm text-gray-600 dark:text-gray-400 md:text-base">
+            Votre partenaire pour tous vos trajets en RDC.
+          </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <!-- Security -->
-          <div class="feature-card text-center">
-            <div class="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-10 h-10 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-              </svg>
-            </div>
-            <h4 class="text-xl font-semibold text-gray-900 mb-2">Sécurité</h4>
-            <p class="text-gray-600">Voyagez en toute tranquillité avec nos véhicules modernes et nos chauffeurs expérimentés</p>
-          </div>
-
-          <!-- Punctuality -->
-          <div class="feature-card text-center">
-            <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h4 class="text-xl font-semibold text-gray-900 mb-2">Ponctualité</h4>
-            <p class="text-gray-600">Respect des horaires garantis avec un suivi en temps réel de vos trajets</p>
-          </div>
-
-          <!-- Customer Service -->
-          <div class="feature-card text-center">
-            <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-10 h-10 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 36h12m-6 6v-6m-2 18h12M12 6h.01M12 12h.01M12 18h.01" />
-              </svg>
-            </div>
-            <h4 class="text-xl font-semibold text-gray-900 mb-2">Service Client</h4>
-            <p class="text-gray-600">Assistance 24/7 et support multilingue pour accompagner votre voyage</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- CTA Section -->
-    <section ref="ctaRef" class="py-16 bg-primary-600 text-white">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <h3 class="text-3xl font-bold mb-4">Prêt à voyager avec nous?</h3>
-        <p class="text-xl mb-8">Rejoignez des milliers de voyageurs qui nous font confiance pour leurs déplacements en toute sécurité à travers la République Démocratique du Congo</p>
-        
-        <div class="flex justify-center space-x-4">
-          <button class="bg-white text-primary-800 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
-            Réserver maintenant
-          </button>
-          <router-link
-            to="/signin"
-            class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary-600 transition"
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+          <div
+            class="feature-card rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-800 dark:bg-[#1E1E1E] dark:shadow-none"
           >
-            Connexion
-          </router-link>
+            <div
+              class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500/15 text-primary-600 dark:text-primary-400"
+            >
+              <svg class="h-9 w-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+            </div>
+            <h4 class="mb-2 text-lg font-bold text-gray-900 dark:text-white">Sécurité</h4>
+            <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+              Flotte moderne et chauffeurs expérimentés.
+            </p>
+          </div>
+
+          <div
+            class="feature-card rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-800 dark:bg-[#1E1E1E] dark:shadow-none"
+          >
+            <div
+              class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500/15 text-primary-600 dark:text-primary-400"
+            >
+              <svg class="h-9 w-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            </div>
+            <h4 class="mb-2 text-lg font-bold text-gray-900 dark:text-white">Ponctualité</h4>
+            <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+              Horaires respectés et suivi en temps réel.
+            </p>
+          </div>
+
+          <div
+            class="feature-card rounded-3xl border border-gray-200 bg-white p-6 text-center shadow-sm dark:border-gray-800 dark:bg-[#1E1E1E] dark:shadow-none"
+          >
+            <div
+              class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500/15 text-primary-600 dark:text-primary-400"
+            >
+              <svg class="h-9 w-9" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
+                />
+              </svg>
+            </div>
+            <h4 class="mb-2 text-lg font-bold text-gray-900 dark:text-white">Service client</h4>
+            <p class="text-sm leading-relaxed text-gray-600 dark:text-gray-400">
+              Assistance 24/7 et support multilingue.
+            </p>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- Stats Section -->
-    <section ref="statsRef" class="py-16 bg-gray-50">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
-          <div>
-            <p class="stat-number text-4xl font-bold text-primary-600 mb-2" data-value="50000" data-suffix="K+">0</p>
-            <p class="text-gray-600">Voyageurs satisfaits</p>
+    <!-- CTA — barre type confirmation paiement -->
+    <section ref="ctaRef" class="border-t border-dashed border-gray-200 py-12 dark:border-gray-800 dark:bg-[#121212]">
+      <div class="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+        <div
+          class="home-app-card overflow-hidden rounded-3xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-800 dark:bg-[#1E1E1E] dark:shadow-none md:p-8"
+        >
+          <h3 class="text-center text-xl font-bold text-gray-900 dark:text-white md:text-2xl">
+            Prêt à voyager avec nous ?
+          </h3>
+          <p class="mx-auto mt-3 max-w-lg text-center text-sm text-gray-600 dark:text-gray-400">
+            Rejoignez les voyageurs qui nous font confiance sur tout le territoire.
+          </p>
+          <div
+            class="mt-8 flex flex-col gap-3 border-t border-dashed border-gray-200 pt-8 dark:border-gray-700 sm:flex-row sm:justify-center"
+          >
+            <a
+              href="#search"
+              class="inline-flex items-center justify-center rounded-2xl bg-primary-500 px-8 py-3.5 text-center text-sm font-bold text-gray-950 transition hover:bg-primary-600 dark:text-gray-950"
+            >
+              Réserver maintenant
+            </a>
+            <router-link
+              to="/signin"
+              class="inline-flex items-center justify-center rounded-2xl border-2 border-gray-300 px-8 py-3.5 text-center text-sm font-bold text-gray-800 transition hover:bg-gray-50 dark:border-gray-600 dark:text-white dark:hover:bg-gray-800/80"
+            >
+              Connexion
+            </router-link>
           </div>
-          <div>
-            <p class="stat-number text-4xl font-bold text-primary-600 mb-2" data-value="100" data-suffix="+">0</p>
-            <p class="text-gray-600">Destinations</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Chiffres -->
+    <section ref="statsRef" class="border-t border-dashed border-gray-200 py-14 dark:border-gray-800 dark:bg-[#0f0f0f]">
+      <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div
+          class="grid grid-cols-2 gap-4 rounded-3xl border border-gray-200 bg-white p-6 md:grid-cols-4 md:gap-6 md:p-8 dark:border-gray-800 dark:bg-[#1E1E1E]"
+        >
+          <div class="text-center">
+            <p
+              class="stat-number mb-1 text-3xl font-bold text-primary-600 md:text-4xl dark:text-primary-400"
+              data-value="50000"
+              data-suffix="K+"
+            >
+              0
+            </p>
+            <p class="text-xs text-gray-600 dark:text-gray-400 md:text-sm">Voyageurs satisfaits</p>
           </div>
-          <div>
-            <p class="stat-number text-4xl font-bold text-primary-600 mb-2" data-value="24" data-suffix="/7">0</p>
-            <p class="text-gray-600">Assistance</p>
+          <div class="text-center">
+            <p
+              class="stat-number mb-1 text-3xl font-bold text-primary-600 md:text-4xl dark:text-primary-400"
+              data-value="100"
+              data-suffix="+"
+            >
+              0
+            </p>
+            <p class="text-xs text-gray-600 dark:text-gray-400 md:text-sm">Destinations</p>
           </div>
-          <div>
-            <p class="stat-number text-4xl font-bold text-primary-600 mb-2" data-value="15" data-suffix="+">0</p>
-            <p class="text-gray-600">Années d'expérience</p>
+          <div class="text-center">
+            <p
+              class="stat-number mb-1 text-3xl font-bold text-primary-600 md:text-4xl dark:text-primary-400"
+              data-value="24"
+              data-suffix="/7"
+            >
+              0
+            </p>
+            <p class="text-xs text-gray-600 dark:text-gray-400 md:text-sm">Assistance</p>
+          </div>
+          <div class="text-center">
+            <p
+              class="stat-number mb-1 text-3xl font-bold text-primary-600 md:text-4xl dark:text-primary-400"
+              data-value="15"
+              data-suffix="+"
+            >
+              0
+            </p>
+            <p class="text-xs text-gray-600 dark:text-gray-400 md:text-sm">Années d'expérience</p>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Footer -->
-    <footer id="contact" class="bg-gray-900 text-white py-12">
+    <footer id="contact" class="border-t border-gray-800 bg-[#0d0d0d] py-12 text-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
           <!-- Company Info -->
@@ -567,6 +818,25 @@
 
 <script setup >
 import { ref, onMounted, onUnmounted } from 'vue'
+import { Autoplay, EffectFade, Pagination } from 'swiper/modules'
+import { Swiper, SwiperSlide } from 'swiper/vue'
+import ThemeToggler from '@/components/common/ThemeToggler.vue'
+import { homeHeroSlides } from '@/config/homeHeroCarousel.js'
+import 'swiper/css'
+import 'swiper/css/effect-fade'
+import 'swiper/css/pagination'
+
+const swiperModules = [Pagination, Autoplay, EffectFade]
+
+/** Autoplay : délai entre deux changements (après la fin de la transition). */
+const heroAutoplay = {
+  delay: 3200,
+  disableOnInteraction: false,
+  pauseOnMouseEnter: false,
+  stopOnLastSlide: false,
+}
+
+const heroFadeEffect = { crossFade: true }
 
 // Références pour les éléments à animer
 const heroRef = ref(null)
@@ -629,12 +899,6 @@ const observer = new IntersectionObserver(animateOnScroll, observerOptions)
 
 onMounted(() => {
   // Observer chaque section avec des animations différentes
-  setTimeout(() => {
-    if (heroRef.value) {
-      heroRef.value.classList.add('animate-hero')
-    }
-  }, 100)
-
   if (searchRef.value) {
     searchRef.value.setAttribute('data-animation', 'fadeInUp')
     searchRef.value.setAttribute('data-delay', '200')
@@ -835,6 +1099,57 @@ html {
 
 ::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #3641f5 0%, #252dae 100%);
+}
+
+/* Hero — fondu + zoom lent sur l’image (Ken Burns inversé à l’activation) */
+.home-hero-swiper--fade :deep(.swiper-slide) .hero-slide-img__media {
+  transform: scale(1.1);
+  transition: transform 1.85s cubic-bezier(0.33, 1, 0.68, 1);
+  will-change: transform;
+}
+
+.home-hero-swiper--fade :deep(.swiper-slide-active) .hero-slide-img__media {
+  transform: scale(1);
+}
+
+/* Hero carrousel — hauteur légèrement < 100dvh pour laisser voir le bas de section */
+.home-hero-swiper :deep(.swiper-slide) {
+  height: calc(100dvh - 1.25rem);
+  min-height: calc(100dvh - 1.25rem);
+}
+
+@media (min-width: 640px) {
+  .home-hero-swiper :deep(.swiper-slide) {
+    height: calc(100dvh - 1.5rem);
+    min-height: calc(100dvh - 1.5rem);
+  }
+}
+
+.home-hero-swiper :deep(.swiper-wrapper) {
+  min-height: calc(100dvh - 1.25rem);
+}
+
+@media (min-width: 640px) {
+  .home-hero-swiper :deep(.swiper-wrapper) {
+    min-height: calc(100dvh - 1.5rem);
+  }
+}
+
+/* Hero carrousel — pastilles type maquette */
+.hero-carousel-pagination :deep(.swiper-pagination-bullet) {
+  width: 8px;
+  height: 8px;
+  margin: 0 !important;
+  border-radius: 9999px;
+  background: #ffffff;
+  opacity: 1;
+  transition: width 0.25s ease, background-color 0.25s ease;
+}
+
+.hero-carousel-pagination :deep(.swiper-pagination-bullet-active) {
+  width: 28px;
+  border-radius: 9999px;
+  background: var(--color-500);
 }
 </style>
 
