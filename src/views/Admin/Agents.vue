@@ -1,15 +1,15 @@
 <template>
   <DefaultLayout>
     <div class="space-y-6">
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="rusa-gradient-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Agents</h1>
-          <p class="text-gray-600 dark:text-primary-300/80">Employés rattachés à une société</p>
+          <h1 class="text-2xl font-bold text-white">Agents</h1>
+          <p class="text-primary-100">{{ headerIntro }}</p>
         </div>
         <button
           type="button"
           @click="openCreate"
-          class="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-primary-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 dark:ring-offset-primary-950"
+          class="rusa-btn-primary shrink-0 bg-white text-primary-800 hover:bg-primary-50"
         >
           Nouvel agent
         </button>
@@ -514,6 +514,7 @@ import DefaultLayout from '@/components/layout/DefaultLayout.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRoleCatalogStore } from '@/stores/roleCatalog'
 import { notify } from '@/utils/notify'
+import { useAdminModuleGreeting } from '@/composables/useAdminModuleGreeting'
 import { listSocietesArray } from '@/services/societeService'
 import {
   listAgentsArray,
@@ -527,6 +528,7 @@ import {
 } from '@/services/agentService'
 
 const authStore = useAuthStore()
+const headerIntro = useAdminModuleGreeting('bienvenue — agents et société ci-dessous.')
 const roleCatalog = useRoleCatalogStore()
 const agents = ref([])
 const societeOptions = ref([])

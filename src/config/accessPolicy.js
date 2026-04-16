@@ -31,6 +31,7 @@ function pathUnderPrefix(path, prefix) {
 /** Sous-ensemble « gestion opérationnelle » du module /admin pour le gérant. */
 const GERANT_ADMIN_PREFIXES = [
   '/admin/trips',
+  '/admin/voyages',
   '/admin/reservations',
   '/admin/agents',
   '/admin/destinations',

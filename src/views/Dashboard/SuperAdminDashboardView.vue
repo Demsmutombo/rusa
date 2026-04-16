@@ -21,11 +21,7 @@
             Tableau de bord
           </h1>
           <p class="mt-1 max-w-xl text-sm text-primary-100/95">
-            {{
-              dashFullExperience
-                ? 'Vue globale des sociétés, finances et utilisateurs'
-                : 'Aperçu des sociétés — les autres indicateurs seront ajoutés progressivement.'
-            }}
+            {{ superAdminIntro }}
           </p>
         </div>
         <p
@@ -504,6 +500,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
+import { useAuthStore } from '@/stores/auth'
 import { fetchSuperAdminDashboard } from '@/services/superAdminDashboardService'
 import {
   listSocietesArray,
@@ -521,6 +518,20 @@ const SUPER_ADMIN_DASH_FLAGS = {
   top5: false,
   alerts: false,
 }
+
+const authStore = useAuthStore()
+
+function firstNameFromUser(u) {
+  const full = String(u?.nomComplet || u?.NomComplet || '').trim()
+  if (!full) return ''
+  return full.split(/\s+/)[0] || full
+}
+
+const superAdminIntro = computed(() => {
+  const first = firstNameFromUser(authStore.user)
+  const greet = first ? `${first}, ` : ''
+  return `${greet}bienvenue — pilotage global, sociétés et indicateurs ci-dessous.`
+})
 
 const loading = ref(true)
 const dashboardLoadError = ref('')
@@ -640,10 +651,6 @@ const kpiCardsVisible = computed(() => {
     (c) => c.key === 'totalSocietes' || c.key === 'societesActives'
   )
 })
-
-const dashFullExperience = computed(() =>
-  Object.values(SUPER_ADMIN_DASH_FLAGS).every(Boolean)
-)
 
 const caCategories = computed(() =>
   (dashboard.value?.tendances?.evolutionChiffreAffaires || []).map((p) => p.mois || `${p.annee}`)

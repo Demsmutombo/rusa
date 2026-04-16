@@ -8,7 +8,7 @@
             Gestion des Trajets
           </h1>
           <p class="text-primary-100">
-            Supervisez tous les trajets de la plateforme
+            {{ headerIntro }}
           </p>
         </div>
         <div class="flex items-center gap-3">
@@ -234,6 +234,9 @@
 import { ref, computed } from 'vue'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
 import { notify } from '@/utils/notify'
+import { useAdminModuleGreeting } from '@/composables/useAdminModuleGreeting'
+
+const headerIntro = useAdminModuleGreeting('bienvenue — trajets ci-dessous.')
 
 const trips = ref([
   {

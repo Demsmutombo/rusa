@@ -1,5 +1,7 @@
 <template>
-  <div class="mx-auto mb-10 w-full max-w-60 rounded-2xl border border-white/10 bg-white/5 px-4 py-5 text-center backdrop-blur-sm">
+  <div
+    class="mx-auto mb-10 w-full max-w-60 rounded-2xl border border-gray-200 bg-gray-50 px-4 py-5 text-center dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-sm"
+  >
     <a
       :href="documentationLink"
       target="_blank"

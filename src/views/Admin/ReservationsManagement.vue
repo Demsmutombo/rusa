@@ -8,92 +8,106 @@
             Gestion des Réservations
           </h1>
           <p class="text-primary-100">
-            Supervisez toutes les réservations de la plateforme
+            {{ headerIntro }}
           </p>
         </div>
         <div class="flex items-center gap-3">
-          <button type="button" class="rusa-btn-primary bg-white text-primary-800 hover:bg-primary-50">
+          <button
+            type="button"
+            class="shrink-0 rounded-lg bg-white/15 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25"
+          >
             Exporter les réservations
           </button>
         </div>
       </div>
 
-      <!-- Stats Cards -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="rusa-card p-6">
+      <!-- Stats Cards (palette alignée Bus / Destinations — thème primary) -->
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+        <div class="rusa-card p-5">
           <div class="flex items-center">
-            <div class="p-3 bg-blue-100 rounded-lg">
-              <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div
+              class="rounded-lg bg-primary-100/90 p-3 text-primary-700 dark:bg-primary-900/55 dark:text-primary-300"
+            >
+              <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Total Réservations</p>
-              <p class="text-2xl font-bold text-gray-900">{{ stats.total }}</p>
+            <div class="ml-4 min-w-0">
+              <p class="text-sm font-medium text-gray-600 dark:text-primary-300/80">Total Réservations</p>
+              <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.total }}</p>
             </div>
           </div>
         </div>
 
-        <div class="rusa-card p-6">
+        <div class="rusa-card p-5">
           <div class="flex items-center">
-            <div class="p-3 bg-green-100 rounded-lg">
-              <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div
+              class="rounded-lg bg-primary-100/90 p-3 text-primary-700 dark:bg-primary-900/55 dark:text-primary-300"
+            >
+              <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Confirmées</p>
-              <p class="text-2xl font-bold text-gray-900">{{ stats.confirmed }}</p>
+            <div class="ml-4 min-w-0">
+              <p class="text-sm font-medium text-gray-600 dark:text-primary-300/80">Confirmées</p>
+              <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.confirmed }}</p>
             </div>
           </div>
         </div>
 
-        <div class="rusa-card p-6">
+        <div class="rusa-card p-5">
           <div class="flex items-center">
-            <div class="p-3 bg-yellow-100 rounded-lg">
-              <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div
+              class="rounded-lg bg-primary-100/90 p-3 text-primary-700 dark:bg-primary-900/55 dark:text-primary-300"
+            >
+              <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">En attente</p>
-              <p class="text-2xl font-bold text-gray-900">{{ stats.pending }}</p>
+            <div class="ml-4 min-w-0">
+              <p class="text-sm font-medium text-gray-600 dark:text-primary-300/80">En attente</p>
+              <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.pending }}</p>
             </div>
           </div>
         </div>
 
-        <div class="rusa-card p-6">
+        <div class="rusa-card p-5">
           <div class="flex items-center">
-            <div class="p-3 bg-purple-100 rounded-lg">
-              <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div
+              class="rounded-lg bg-primary-100/90 p-3 text-primary-700 dark:bg-primary-900/55 dark:text-primary-300"
+            >
+              <svg class="size-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Revenus</p>
-              <p class="text-2xl font-bold text-gray-900">€{{ stats.revenue.toLocaleString() }}</p>
+            <div class="ml-4 min-w-0">
+              <p class="text-sm font-medium text-gray-600 dark:text-primary-300/80">Revenus</p>
+              <p class="text-2xl font-bold text-gray-900 dark:text-white">€{{ stats.revenue.toLocaleString('fr-FR') }}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Filters -->
-      <div class="rusa-card">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <!-- Filters (même gabarit que Bus / AdminListToolbar) -->
+      <div
+        class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-primary-800/60 dark:bg-primary-950/70 dark:shadow-none md:p-5"
+      >
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-4 md:items-end">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Rechercher</label>
+            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-primary-200/90">Rechercher</label>
             <input
               v-model="searchQuery"
-              type="text"
-              placeholder="Client, trajet, transporteur..."
-              class="w-full px-3 py-2 border border-primary-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+              type="search"
+              autocomplete="off"
+              placeholder="Client, trajet, transporteur…"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-primary-700 dark:bg-primary-900/80 dark:text-gray-100 dark:placeholder:text-primary-500/50 dark:focus:border-primary-400 dark:focus:ring-primary-400"
             />
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-primary-200/90">Statut</label>
             <select
               v-model="statusFilter"
-              class="w-full px-3 py-2 border border-primary-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/25 dark:border-primary-700 dark:bg-primary-900/70 dark:text-primary-100 dark:focus:border-primary-400"
             >
               <option value="">Tous les statuts</option>
               <option value="confirmed">Confirmées</option>
@@ -103,17 +117,18 @@
             </select>
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-primary-200/90">Date</label>
             <input
               v-model="dateFilter"
               type="date"
-              class="w-full px-3 py-2 border border-primary-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+              class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-primary-700 dark:bg-primary-900/80 dark:text-gray-100 dark:[color-scheme:dark] dark:focus:border-primary-400 dark:focus:ring-primary-400"
             />
           </div>
           <div class="flex items-end">
             <button
+              type="button"
+              class="w-full rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 dark:border-primary-700 dark:bg-primary-900/50 dark:text-primary-200 dark:hover:bg-primary-800/60"
               @click="resetFilters"
-              class="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200"
             >
               Réinitialiser
             </button>
@@ -123,97 +138,117 @@
 
       <!-- Reservations Table -->
       <div class="rusa-panel">
-        <div class="overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-primary-50/80 dark:bg-primary-950/50">
+        <p
+          v-if="error"
+          class="border-b border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200"
+        >
+          {{ error }}
+        </p>
+        <p
+          v-if="loading"
+          class="px-4 py-10 text-center text-sm text-gray-500 dark:text-primary-400/80"
+        >
+          Chargement des réservations…
+        </p>
+        <div v-else class="overflow-x-auto">
+          <table class="w-full min-w-[720px] text-left text-sm">
+            <thead class="border-b border-gray-200 bg-gray-50 dark:border-primary-800/60 dark:bg-primary-900/50">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
                   Réservation
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
                   Client
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
                   Trajet
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
                   Date & Heure
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
                   Places
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
                   Total
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
                   Statut
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-primary-100 dark:divide-primary-800/50">
-              <tr v-for="reservation in filteredReservations" :key="reservation.id">
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <p class="text-sm font-medium text-gray-900">#{{ reservation.id }}</p>
-                  <p class="text-sm text-gray-500">{{ reservation.createdAt }}</p>
+            <tbody class="divide-y divide-gray-200 dark:divide-primary-800/50">
+              <tr
+                v-for="reservation in filteredReservations"
+                :key="reservation.id"
+                class="bg-white hover:bg-gray-50/80 dark:bg-primary-950/40 dark:hover:bg-primary-900/35"
+              >
+                <td class="whitespace-nowrap px-4 py-3">
+                  <p class="font-medium text-gray-900 dark:text-gray-100">#{{ reservation.id }}</p>
+                  <p class="text-gray-500 dark:text-primary-400/85">{{ reservation.createdAt }}</p>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="whitespace-nowrap px-4 py-3">
                   <div class="flex items-center">
-                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                      <span class="text-xs font-medium">{{ reservation.clientName.charAt(0) }}</span>
+                    <div
+                      class="flex size-8 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-700 dark:bg-primary-800 dark:text-primary-100"
+                    >
+                      <span class="text-xs font-medium">{{ clientInitial(reservation.clientName) }}</span>
                     </div>
-                    <div class="ml-3">
-                      <p class="text-sm font-medium text-gray-900">{{ reservation.clientName }}</p>
-                      <p class="text-sm text-gray-500">{{ reservation.clientEmail }}</p>
+                    <div class="ml-3 min-w-0">
+                      <p class="font-medium text-gray-900 dark:text-gray-100">{{ reservation.clientName }}</p>
+                      <p class="truncate text-gray-500 dark:text-primary-400/85">{{ reservation.clientEmail }}</p>
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="whitespace-nowrap px-4 py-3">
                   <div>
-                    <p class="text-sm font-medium text-gray-900">
+                    <p class="font-medium text-gray-900 dark:text-gray-100">
                       {{ reservation.departure }} → {{ reservation.arrival }}
                     </p>
-                    <p class="text-sm text-gray-500">{{ reservation.carrier }}</p>
+                    <p class="text-gray-500 dark:text-primary-400/85">{{ reservation.carrier }}</p>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
+                <td class="whitespace-nowrap px-4 py-3">
                   <div>
-                    <p class="text-sm text-gray-900">{{ reservation.date }}</p>
-                    <p class="text-sm text-gray-500">{{ reservation.time }}</p>
+                    <p class="text-gray-900 dark:text-gray-100">{{ reservation.date }}</p>
+                    <p class="text-gray-500 dark:text-primary-400/85">{{ reservation.time }}</p>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <p class="text-sm text-gray-900">{{ reservation.places }} place(s)</p>
+                <td class="whitespace-nowrap px-4 py-3 text-gray-900 dark:text-gray-100">
+                  {{ reservation.places }} place(s)
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <p class="text-sm font-medium text-gray-900">€{{ reservation.totalPrice }}</p>
+                <td class="whitespace-nowrap px-4 py-3 font-medium text-gray-900 dark:text-gray-100">
+                  €{{ Number(reservation.totalPrice || 0).toLocaleString('fr-FR') }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="px-2 py-1 text-xs font-medium rounded-full"
-                        :class="getStatusBadgeClass(reservation.status)">
-                    {{ reservation.status }}
+                <td class="whitespace-nowrap px-4 py-3">
+                  <span class="rounded-full px-2 py-1 text-xs font-medium" :class="getStatusBadgeClass(reservation.status)">
+                    {{ statusLabel(reservation.status) }}
                   </span>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <td class="whitespace-nowrap px-4 py-3 text-sm font-medium">
                   <button
+                    type="button"
+                    class="mr-3 text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-200"
                     @click="viewReservationDetails(reservation)"
-                    class="text-primary-600 hover:text-primary-800 mr-3"
                   >
                     Détails
                   </button>
                   <button
                     v-if="reservation.status === 'pending'"
+                    type="button"
+                    class="mr-3 text-emerald-600 hover:text-emerald-800 dark:text-emerald-400/90 dark:hover:text-emerald-300"
                     @click="confirmReservation(reservation)"
-                    class="text-green-600 hover:text-green-900 mr-3"
                   >
                     Confirmer
                   </button>
                   <button
                     v-if="reservation.status === 'confirmed'"
+                    type="button"
+                    class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                     @click="cancelReservation(reservation)"
-                    class="text-red-600 hover:text-red-900"
                   >
                     Annuler
                   </button>
@@ -221,6 +256,12 @@
               </tr>
             </tbody>
           </table>
+          <p
+            v-if="!filteredReservations.length"
+            class="px-4 py-10 text-center text-sm text-gray-500 dark:text-primary-400/80"
+          >
+            Aucune réservation à afficher.
+          </p>
         </div>
       </div>
     </div>
@@ -228,82 +269,47 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
 import { notify } from '@/utils/notify'
+import { useAdminModuleGreeting } from '@/composables/useAdminModuleGreeting'
+import {
+  listReservationsArray,
+  mapReservationFromApi,
+  reservationRawToPutBody,
+  updateReservation,
+  mapUiStatutToApi,
+} from '@/services/reservationService'
 
-const reservations = ref([
-  {
-    id: 1,
-    clientName: 'Jean Dupont',
-    clientEmail: 'jean.dupont@email.com',
-    departure: 'Paris',
-    arrival: 'Lyon',
-    carrier: 'Transport Rapide',
-    date: '2024-01-15',
-    time: '08:00',
-    places: 2,
-    totalPrice: 90,
-    status: 'confirmed',
-    createdAt: '2024-01-10'
-  },
-  {
-    id: 2,
-    clientName: 'Marie Martin',
-    clientEmail: 'marie.martin@email.com',
-    departure: 'Lyon',
-    arrival: 'Marseille',
-    carrier: 'Voyage Express',
-    date: '2024-01-16',
-    time: '14:30',
-    places: 1,
-    totalPrice: 55,
-    status: 'pending',
-    createdAt: '2024-01-11'
-  },
-  {
-    id: 3,
-    clientName: 'Pierre Bernard',
-    clientEmail: 'pierre.bernard@email.com',
-    departure: 'Paris',
-    arrival: 'Bordeaux',
-    carrier: 'Speed Transport',
-    date: '2024-01-14',
-    time: '10:00',
-    places: 3,
-    totalPrice: 360,
-    status: 'completed',
-    createdAt: '2024-01-08'
-  },
-  {
-    id: 4,
-    clientName: 'Sophie Petit',
-    clientEmail: 'sophie.petit@email.com',
-    departure: 'Marseille',
-    arrival: 'Nice',
-    carrier: 'City Link',
-    date: '2024-01-13',
-    time: '09:15',
-    places: 2,
-    totalPrice: 70,
-    status: 'cancelled',
-    createdAt: '2024-01-09'
-  },
-  {
-    id: 5,
-    clientName: 'Luc',
-    clientEmail: 'lucas.moreau@email.com',
-    departure: 'Lille',
-    arrival: 'Bruxelles',
-    carrier: 'Rapid Move',
-    date: '2024-01-17',
-    time: '07:30',
-    places: 4,
-    totalPrice: 112,
-    status: 'confirmed',
-    createdAt: '2024-01-12'
+const headerIntro = useAdminModuleGreeting('bienvenue — réservations ci-dessous.')
+
+const reservations = ref([])
+const loading = ref(false)
+const error = ref('')
+
+function clientInitial(name) {
+  const s = String(name || '').trim()
+  if (!s || s === '—') return '?'
+  return s.charAt(0).toUpperCase()
+}
+
+async function loadReservations() {
+  loading.value = true
+  error.value = ''
+  try {
+    const rows = await listReservationsArray()
+    reservations.value = rows.map((r) => mapReservationFromApi(r))
+  } catch (e) {
+    error.value = e?.message || 'Impossible de charger les réservations.'
+    reservations.value = []
+  } finally {
+    loading.value = false
   }
-])
+}
+
+onMounted(() => {
+  loadReservations()
+})
 
 const searchQuery = ref('')
 const statusFilter = ref('')
@@ -321,12 +327,19 @@ const stats = computed(() => {
 })
 
 const filteredReservations = computed(() => {
-  return reservations.value.filter(reservation => {
-    const matchesSearch = reservation.clientName.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         reservation.clientEmail.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         reservation.departure.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         reservation.arrival.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-                         reservation.carrier.toLowerCase().includes(searchQuery.value.toLowerCase())
+  const q = searchQuery.value.trim().toLowerCase()
+  return reservations.value.filter((reservation) => {
+    const hay = [
+      reservation.clientName,
+      reservation.clientEmail,
+      reservation.departure,
+      reservation.arrival,
+      reservation.carrier,
+      String(reservation.id),
+    ]
+      .map((x) => String(x || '').toLowerCase())
+      .join(' ')
+    const matchesSearch = !q || hay.includes(q)
     const matchesStatus = !statusFilter.value || reservation.status === statusFilter.value
     const matchesDate = !dateFilter.value || reservation.date === dateFilter.value
     return matchesSearch && matchesStatus && matchesDate
@@ -335,12 +348,29 @@ const filteredReservations = computed(() => {
 
 const getStatusBadgeClass = (status) => {
   const classes = {
-    confirmed: 'bg-green-100 text-green-800',
-    pending: 'bg-yellow-100 text-yellow-800',
-    cancelled: 'bg-red-100 text-red-800',
-    completed: 'bg-blue-100 text-blue-800'
+    confirmed:
+      'bg-emerald-100 text-emerald-900 dark:bg-emerald-950/55 dark:text-emerald-200',
+    pending:
+      'bg-primary-100 text-primary-900 dark:bg-primary-900/50 dark:text-primary-200',
+    cancelled: 'bg-red-100 text-red-800 dark:bg-red-950/50 dark:text-red-200',
+    completed:
+      'bg-sky-100 text-sky-900 dark:bg-sky-950/50 dark:text-sky-200',
   }
-  return classes[status] || 'bg-gray-100 text-gray-800'
+  return (
+    classes[status] ||
+    'bg-gray-100 text-gray-800 dark:bg-primary-900/40 dark:text-primary-200'
+  )
+}
+
+const STATUS_LABELS = {
+  confirmed: 'Confirmée',
+  pending: 'En attente',
+  cancelled: 'Annulée',
+  completed: 'Terminée',
+}
+
+function statusLabel(status) {
+  return STATUS_LABELS[status] || status
 }
 
 const resetFilters = () => {
@@ -350,13 +380,27 @@ const resetFilters = () => {
 }
 
 const viewReservationDetails = (reservation) => {
-  console.log('Voir détails de la réservation:', reservation)
+  const lines = [
+    `Client : ${reservation.clientName}`,
+    `Contact : ${reservation.clientEmail}`,
+    `Trajet : ${reservation.departure} → ${reservation.arrival}`,
+    `Départ : ${reservation.date} à ${reservation.time}`,
+    `Montant : €${Number(reservation.totalPrice || 0).toLocaleString('fr-FR')}`,
+    `Statut (API) : ${reservation.apiStatutReservation || '—'}`,
+  ]
+  notify.info(`Réservation #${reservation.id}`, lines.join('\n'))
 }
 
-const confirmReservation = (reservation) => {
-  const index = reservations.value.findIndex(r => r.id === reservation.id)
-  if (index !== -1) {
-    reservations.value[index].status = 'confirmed'
+const confirmReservation = async (reservation) => {
+  try {
+    const body = reservationRawToPutBody(reservation.raw, {
+      statutReservation: mapUiStatutToApi('confirmed'),
+    })
+    await updateReservation(reservation.id, body)
+    notify.toast.success('Réservation confirmée')
+    await loadReservations()
+  } catch (e) {
+    await notify.error('Confirmation impossible', e?.message || 'Erreur inconnue')
   }
 }
 
@@ -366,11 +410,16 @@ const cancelReservation = async (reservation) => {
     'Annuler la réservation'
   )
   if (!ok) return
-  const index = reservations.value.findIndex(r => r.id === reservation.id)
-  if (index !== -1) {
-    reservations.value[index].status = 'cancelled'
+  try {
+    const body = reservationRawToPutBody(reservation.raw, {
+      statutReservation: mapUiStatutToApi('cancelled'),
+    })
+    await updateReservation(reservation.id, body)
+    notify.toast.success('Réservation annulée')
+    await loadReservations()
+  } catch (e) {
+    await notify.error('Annulation impossible', e?.message || 'Erreur inconnue')
   }
-  notify.toast.success('Réservation annulée')
 }
 </script>
 

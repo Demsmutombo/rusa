@@ -8,7 +8,7 @@
             Paramètres Administrateur
           </h1>
           <p class="text-primary-100">
-            Configurez les paramètres de la plateforme
+            {{ headerIntro }}
           </p>
         </div>
         <div class="flex items-center gap-3">
@@ -302,6 +302,9 @@
 import { ref } from 'vue'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
 import { notify } from '@/utils/notify'
+import { useAdminModuleGreeting } from '@/composables/useAdminModuleGreeting'
+
+const headerIntro = useAdminModuleGreeting('bienvenue — configuration ci-dessous.')
 
 const activeTab = ref('general')
 

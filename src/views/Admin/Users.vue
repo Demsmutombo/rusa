@@ -8,7 +8,7 @@
             Gestion des Utilisateurs
           </h1>
           <p class="text-primary-100">
-            Gérez tous les utilisateurs de la plateforme
+            {{ headerIntro }}
           </p>
         </div>
         <div class="flex items-center gap-3">
@@ -259,6 +259,9 @@ import {
   slugFromIdRole,
 } from '@/services/utilisateurService'
 import { notify } from '@/utils/notify'
+import { useAdminModuleGreeting } from '@/composables/useAdminModuleGreeting'
+
+const headerIntro = useAdminModuleGreeting('bienvenue — comptes et rôles ci-dessous.')
 
 const users = ref([])
 const listLoading = ref(false)

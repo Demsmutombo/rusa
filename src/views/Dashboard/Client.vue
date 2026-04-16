@@ -4,9 +4,8 @@
       <h1 class="text-xl font-semibold text-primary-900 dark:text-white">
         Espace connecté
       </h1>
-      <p class="mt-3 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-        Vous êtes connecté en tant que client. Les modules du tableau de bord seront
-        affichés progressivement.
+      <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
+        {{ tagline }}
       </p>
       <p
         v-if="currentUser.email"
@@ -30,5 +29,12 @@ const currentUser = computed(() => {
     email: user.email || clientData.email || '',
     role: user.role || 'client',
   }
+})
+
+const tagline = computed(() => {
+  const full = String(currentUser.value.name || '').trim()
+  const first = full ? full.split(/\s+/)[0] : ''
+  const greet = first && first !== 'Client' ? `${first}, ` : ''
+  return `${greet}bienvenue — vos réservations et trajets via le menu.`
 })
 </script>

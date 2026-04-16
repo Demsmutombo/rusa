@@ -111,6 +111,16 @@ const router = createRouter({
       },
     },
     {
+      path: '/super-admin/voyages',
+      name: 'SuperAdminVoyages',
+      component: () => import('../views/Admin/Voyages.vue'),
+      meta: {
+        title: 'Voyages - Super-Admin - Rusa Travel',
+        requiresAuth: true,
+        roles: ['superadmin'],
+      },
+    },
+    {
       path: '/admin',
       name: 'AdminDashboard',
       component: roleDashboard,
@@ -231,6 +241,16 @@ const router = createRouter({
       },
     },
     {
+      path: '/admin/voyages',
+      name: 'AdminVoyages',
+      component: () => import('../views/Admin/Voyages.vue'),
+      meta: {
+        title: 'Voyages - Rusa Travel',
+        requiresAuth: true,
+        adminModule: true,
+      },
+    },
+    {
       path: '/admin/transporteurs',
       name: 'AdminTransporteurs',
       component: () => import('../views/Admin/Transporteurs.vue'),
@@ -256,6 +276,16 @@ const router = createRouter({
       component: () => import('../views/Admin/ReservationsManagement.vue'),
       meta: {
         title: 'Gestion des Réservations - Rusa Travel',
+        requiresAuth: true,
+        adminModule: true,
+      },
+    },
+    {
+      path: '/admin/billets',
+      name: 'AdminBillets',
+      component: () => import('../views/Admin/Billets.vue'),
+      meta: {
+        title: 'Billets - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
       },

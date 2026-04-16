@@ -1,7 +1,7 @@
 <template>
   <aside
     :class="[
-      'rusa-sidebar fixed top-0 left-0 z-99999 mt-16 flex h-screen flex-col border-r border-primary-800/50 bg-primary-950 px-5 text-white transition-all duration-300 ease-in-out lg:mt-0',
+      'rusa-sidebar fixed top-0 left-0 z-99999 mt-16 flex h-screen flex-col border-r border-gray-200 bg-white px-5 text-gray-800 shadow-[1px_0_0_rgba(0,0,0,0.04)] transition-all duration-300 ease-in-out dark:border-primary-800/50 dark:bg-primary-950 dark:text-white dark:shadow-none lg:mt-0',
       {
         'lg:w-[290px]': isExpanded || isMobileOpen || isHovered,
         'lg:w-[90px]': !isExpanded && !isHovered,
@@ -33,7 +33,7 @@
       <nav class="mb-6">
         <p
           v-if="menuGroups.length === 0 && (isExpanded || isHovered || isMobileOpen)"
-          class="px-1 text-center text-xs leading-relaxed text-primary-300/90"
+          class="px-1 text-center text-xs leading-relaxed text-gray-500 dark:text-primary-300/90"
         >
           Navigation masquée — les modules seront activés progressivement.
         </p>
@@ -41,7 +41,7 @@
           <div v-for="(menuGroup, groupIndex) in menuGroups" :key="groupIndex">
             <h2
               :class="[
-                'mb-4 flex text-xs uppercase leading-[20px] text-primary-400/80',
+                'mb-4 flex text-xs uppercase leading-[20px] text-gray-500 dark:text-primary-400/80',
                 !isExpanded && !isHovered
                   ? 'lg:justify-center'
                   : 'justify-start',
@@ -91,7 +91,10 @@
                     :class="[
                       'ml-auto w-5 h-5 transition-transform duration-200',
                       {
-                        'rotate-180 text-primary-300': isSubmenuExpanded(groupIndex, index),
+                        'rotate-180 text-primary-600 dark:text-primary-300': isSubmenuExpanded(
+                          groupIndex,
+                          index
+                        ),
                       },
                     ]"
                   />
@@ -194,14 +197,14 @@
       />
 
       <div
-        class="mt-auto shrink-0 border-t border-primary-800/50 pt-4 pb-6"
+        class="mt-auto shrink-0 border-t border-gray-200 pt-4 pb-6 dark:border-primary-800/50"
         :class="[
           !isExpanded && !isHovered ? 'lg:px-0' : '',
         ]"
       >
         <button
           type="button"
-          class="menu-item group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-primary-100/90 transition hover:bg-white/10 hover:text-white"
+          class="menu-item group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-gray-600 transition hover:bg-gray-100 hover:text-gray-900 dark:text-primary-100/90 dark:hover:bg-white/10 dark:hover:text-white"
           :class="[
             !isExpanded && !isHovered && !isMobileOpen
               ? 'lg:justify-center'
@@ -209,7 +212,9 @@
           ]"
           @click="handleLogout"
         >
-          <span class="menu-item-icon-inactive shrink-0 text-primary-200/80 group-hover:text-white">
+          <span
+            class="menu-item-icon-inactive shrink-0 text-gray-500 group-hover:text-gray-700 dark:text-primary-200/80 dark:group-hover:text-white"
+          >
             <LogoutIcon class="h-5 w-5" />
           </span>
           <span

@@ -417,44 +417,37 @@ export function getRoleHomeCopy(roleKey) {
   const copy = {
     superadmin: {
       title: 'Espace Super-Admin',
-      body:
-        'Vue d’ensemble et configuration avancée. Les modules du tableau de bord seront affichés progressivement.',
+      body: 'Pilotage global de la plateforme — modules via le menu.',
     },
     admin: {
       title: 'Espace administrateur',
-      body:
-        'Gestion de la plateforme et des équipes. Les modules du tableau de bord seront affichés progressivement.',
+      body: 'Gestion de votre société — modules via le menu.',
     },
     gerant: {
       title: 'Espace gérant',
-      body:
-        'Pilotage opérationnel et suivi d’activité. Les modules seront affichés progressivement.',
+      body: 'Pilotage opérationnel — modules via le menu.',
     },
     financier: {
       title: 'Espace financier',
-      body:
-        'Suivi des flux financiers, rapports et paiements. Les modules seront affichés progressivement.',
+      body: 'Suivi financier et paiements — modules via le menu.',
     },
     caissier: {
       title: 'Espace caissier',
-      body:
-        'Encaissements et opérations de caisse. Les modules seront affichés progressivement.',
+      body: 'Encaissements et caisse — modules via le menu.',
     },
     client: {
       title: 'Espace client',
-      body:
-        'Réservations et suivi de vos trajets. Les modules seront affichés progressivement.',
+      body: 'Réservations et trajets — modules via le menu.',
     },
     transporteur: {
       title: 'Espace transporteur',
-      body:
-        'Trajets, véhicules et réservations. Les modules seront affichés progressivement.',
+      body: 'Flotte et trajets — modules via le menu.',
     },
   }
   return (
     copy[roleKey] || {
       title,
-      body: 'Bienvenue. Les modules du tableau de bord seront affichés progressivement.',
+      body: 'Bienvenue — modules via le menu.',
     }
   )
 }

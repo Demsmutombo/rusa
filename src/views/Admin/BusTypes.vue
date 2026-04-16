@@ -19,7 +19,7 @@
           </router-link>
           <h1 class="text-xl font-bold leading-tight text-white sm:text-2xl">Types de bus</h1>
           <p class="mt-1 text-sm text-primary-100 sm:text-base">
-            Libellés par société. Pas de suppression : bascule du statut via mise à jour API.
+            {{ headerIntro }}
           </p>
         </div>
         <button
@@ -41,36 +41,58 @@
       <div
         class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-primary-800/60 dark:bg-primary-950/70 dark:shadow-none"
       >
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="border-b border-gray-200 bg-gray-50 dark:border-primary-800/60 dark:bg-primary-900/50">
-              <tr>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
-                  Libellé
-                </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
-                  Société
-                </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
-                  Statut
-                </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-primary-800/50">
-              <tr v-if="loading">
-                <td colspan="4" class="px-4 py-10 text-center text-gray-500 dark:text-primary-400/80">Chargement…</td>
-              </tr>
-              <tr v-else-if="!rows.length">
-                <td colspan="4" class="px-4 py-10 text-center text-gray-500 dark:text-primary-400/80">
-                  Aucun type de bus.
-                </td>
-              </tr>
-              <template v-else>
+        <div
+          v-if="loading"
+          class="px-4 py-10 text-center text-sm text-gray-500 dark:text-primary-400/80"
+        >
+          Chargement…
+        </div>
+        <div
+          v-else-if="!rows.length"
+          class="px-4 py-10 text-center text-sm text-gray-500 dark:text-primary-400/80"
+        >
+          Aucun type de bus.
+        </div>
+        <template v-else>
+          <AdminListToolbar
+            v-if="rows.length"
+            :search="searchQuery"
+            :statut="statutFilter"
+            :filtered-count="filteredRows.length"
+            :total-count="rows.length"
+            placeholder="Libellé, société…"
+            @update:search="searchQuery = $event"
+            @update:statut="statutFilter = $event"
+            @clear="clearFilters"
+          />
+          <div
+            v-if="rows.length && !filteredRows.length"
+            class="px-4 py-12 text-center text-sm text-gray-500 dark:text-primary-400/80"
+          >
+            Aucun résultat pour cette recherche ou ce filtre de statut.
+          </div>
+          <template v-else-if="filteredRows.length">
+          <div class="hidden overflow-x-auto md:block">
+            <table class="w-full min-w-[480px] text-left text-sm">
+              <thead class="border-b border-gray-200 bg-gray-50 dark:border-primary-800/60 dark:bg-primary-900/50">
+                <tr>
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                    Libellé
+                  </th>
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                    Société
+                  </th>
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                    Statut
+                  </th>
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 dark:divide-primary-800/50">
                 <tr
-                  v-for="r in rows"
+                  v-for="r in filteredRows"
                   :key="r.idTypeBus ?? r.IdTypeBus"
                   class="hover:bg-gray-50/80 dark:hover:bg-primary-900/35"
                 >
@@ -115,10 +137,58 @@
                     </button>
                   </td>
                 </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="divide-y divide-gray-200 dark:divide-primary-800/50 md:hidden">
+            <article
+              v-for="r in filteredRows"
+              :key="`m-${r.idTypeBus ?? r.IdTypeBus}`"
+              class="space-y-3 p-4"
+            >
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <p class="text-base font-semibold text-gray-900 dark:text-white">
+                  {{ r.libelle ?? r.Libelle ?? '—' }}
+                </p>
+                <span
+                  class="inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                  :class="
+                    rowStatut(r)
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'
+                      : 'bg-gray-100 text-gray-700 dark:bg-primary-800/60 dark:text-primary-200'
+                  "
+                >
+                  {{ rowStatut(r) ? 'actif' : 'inactif' }}
+                </span>
+              </div>
+              <p class="text-sm text-gray-600 dark:text-primary-300/90">{{ societeLabelForRow(r) }}</p>
+              <div class="flex flex-wrap gap-2 border-t border-gray-100 pt-3 dark:border-primary-800/50">
+                <button
+                  type="button"
+                  class="rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-800 dark:border-primary-700 dark:bg-primary-900/50 dark:text-primary-200"
+                  @click="openEdit(r)"
+                >
+                  Modifier
+                </button>
+                <button
+                  type="button"
+                  :disabled="togglingId === (r.idTypeBus ?? r.IdTypeBus)"
+                  class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium transition disabled:opacity-50 dark:border-primary-700 dark:bg-primary-900/40"
+                  :class="
+                    rowStatut(r)
+                      ? 'text-amber-800 dark:text-amber-300'
+                      : 'text-emerald-800 dark:text-emerald-300'
+                  "
+                  @click="toggleStatut(r)"
+                >
+                  {{ rowStatut(r) ? 'Désactiver' : 'Réactiver' }}
+                </button>
+              </div>
+            </article>
+          </div>
+          </template>
+        </template>
       </div>
 
       <Teleport to="body">
@@ -175,13 +245,17 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
+import AdminListToolbar from '@/components/admin/AdminListToolbar.vue'
+import { useAdminListSearch } from '@/composables/useAdminListSearch'
 import { useTenantSocieteId } from '@/composables/useTenantSocieteId'
+import { useAdminModuleGreeting } from '@/composables/useAdminModuleGreeting'
 import { listTypeBusArray, createTypeBus, updateTypeBus, toggleTypeBusStatut } from '@/services/typeBusService'
 import { listSocietesArray } from '@/services/societeService'
 import { notify } from '@/utils/notify'
 
 const route = useRoute()
 const { idSocieteForSave } = useTenantSocieteId()
+const headerIntro = useAdminModuleGreeting('bienvenue — types de bus et statut ci-dessous.')
 const isSuperAdminContext = computed(() => route.path.startsWith('/super-admin'))
 
 const rows = ref([])
@@ -228,6 +302,17 @@ function societeLabelForRow(r) {
   }
   return `Société #${id}`
 }
+
+function typeBusTextMatch(r, q) {
+  const blob = [r.libelle, r.Libelle, societeLabelForRow(r)]
+    .map((x) => String(x ?? '').toLowerCase())
+    .join(' ')
+  return blob.includes(q)
+}
+
+const { searchQuery, statutFilter, filteredRows, clearFilters } = useAdminListSearch(rows, typeBusTextMatch, {
+  rowStatut,
+})
 
 async function load() {
   loading.value = true

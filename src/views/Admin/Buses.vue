@@ -1,30 +1,14 @@
 <template>
   <DefaultLayout>
-    <div class="space-y-4">
+    <div class="space-y-6">
       <div class="rusa-gradient-header flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div class="min-w-0 pr-2">
-          <router-link
-            v-if="isSuperAdminContext"
-            to="/super-admin"
-            class="mb-1 inline-block text-xs font-medium text-primary-100 hover:text-white sm:mb-2"
-          >
-            ← Tableau de bord Super-Admin
-          </router-link>
-          <router-link
-            v-else
-            to="/admin"
-            class="mb-1 inline-block text-xs font-medium text-primary-100 hover:text-white sm:mb-2"
-          >
-            ← Tableau de bord Admin
-          </router-link>
-          <h1 class="text-xl font-bold leading-tight text-white sm:text-2xl">Bus</h1>
-          <p class="mt-1 text-sm text-primary-100 sm:text-base">
-            Parc véhicules. Pas de suppression : le statut actif / inactif est basculé via l’API (toggle-statut).
-          </p>
+        <div>
+          <h1 class="text-2xl font-bold text-white">Bus</h1>
+          <p class="text-primary-100">{{ headerIntro }}</p>
         </div>
         <button
           type="button"
-          class="shrink-0 rounded-lg bg-white/15 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25"
+          class="rusa-btn-primary shrink-0 bg-white text-primary-800 hover:bg-primary-50"
           @click="openCreate"
         >
           Nouveau bus
@@ -39,49 +23,109 @@
       </p>
 
       <div
+        class="flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-primary-800/60 dark:bg-primary-950/70 dark:shadow-none sm:flex-row sm:flex-wrap sm:items-end"
+      >
+        <div class="min-w-0 flex-1 sm:min-w-[12rem] sm:max-w-md">
+          <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-primary-200/90">Recherche</label>
+          <input
+            v-model.trim="searchQuery"
+            type="search"
+            placeholder="Marque, n°, plaque, type…"
+            autocomplete="off"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-primary-700 dark:bg-primary-900/80 dark:text-gray-100 dark:placeholder:text-primary-500/50 dark:focus:border-primary-400 dark:focus:ring-primary-400"
+          />
+        </div>
+        <div class="min-w-0 sm:w-44">
+          <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-primary-200/90">Statut</label>
+          <select
+            v-model="statutFilter"
+            class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-primary-700 dark:bg-primary-900/80 dark:text-gray-100 dark:focus:border-primary-400 dark:focus:ring-primary-400"
+          >
+            <option value="all">Tous</option>
+            <option value="active">Actifs</option>
+            <option value="inactive">Inactifs</option>
+          </select>
+        </div>
+        <button
+          v-if="hasActiveFilters"
+          type="button"
+          class="shrink-0 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-100 dark:border-primary-700 dark:bg-primary-900/60 dark:text-primary-200 dark:hover:bg-primary-800/80"
+          @click="clearFilters"
+        >
+          Réinitialiser
+        </button>
+      </div>
+
+      <div
         class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-primary-800/60 dark:bg-primary-950/70 dark:shadow-none"
       >
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
+          <table class="w-full min-w-[720px] text-left text-sm">
             <thead class="border-b border-gray-200 bg-gray-50 dark:border-primary-800/60 dark:bg-primary-900/50">
               <tr>
-                <th class="w-24 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                <th
+                  class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70"
+                >
                   Photo
                 </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                <th
+                  class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70"
+                >
+                  N° bus
+                </th>
+                <th
+                  class="px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70"
+                >
                   Bus
                 </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                <th
+                  class="px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70"
+                >
                   Type
                 </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                <th
+                  class="px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70"
+                >
                   Plaque
                 </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                <th
+                  class="px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70"
+                >
                   Statut
                 </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                <th
+                  class="px-6 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70"
+                >
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-primary-800/50">
               <tr v-if="loading">
-                <td colspan="6" class="px-4 py-10 text-center text-gray-500 dark:text-primary-400/80">Chargement…</td>
+                <td colspan="7" class="px-6 py-10 text-center text-gray-500 dark:text-primary-400/80">
+                  Chargement…
+                </td>
               </tr>
               <tr v-else-if="!rows.length">
-                <td colspan="6" class="px-4 py-10 text-center text-gray-500 dark:text-primary-400/80">Aucun bus.</td>
+                <td colspan="7" class="px-6 py-10 text-center text-gray-500 dark:text-primary-400/80">
+                  Aucun bus pour le moment.
+                </td>
+              </tr>
+              <tr v-else-if="!filteredRows.length">
+                <td colspan="7" class="px-6 py-10 text-center text-gray-500 dark:text-primary-400/80">
+                  Aucun bus ne correspond à la recherche ou au filtre de statut.
+                </td>
               </tr>
               <template v-else>
                 <tr
-                  v-for="r in rows"
+                  v-for="r in filteredRows"
                   :key="r.idBus ?? r.IdBus"
-                  class="hover:bg-gray-50/80 dark:hover:bg-primary-900/35"
+                  class="transition-colors hover:bg-gray-50/80 dark:hover:bg-primary-900/35"
                 >
-                  <td class="px-4 py-3 align-middle">
+                  <td class="px-4 py-4 align-middle">
                     <div
                       v-if="!busPhotoSrc(r) || photoBroken[busPhotoBrokenKey(r)]"
-                      class="flex size-16 shrink-0 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100 text-xs font-semibold text-gray-600 dark:border-primary-600 dark:bg-primary-900/60"
+                      class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-100 text-xs font-semibold text-gray-600 dark:border-primary-700 dark:bg-primary-900/60 dark:text-primary-200"
                     >
                       {{ (r.marques ?? r.Marques ?? '?').slice(0, 2).toUpperCase() }}
                     </div>
@@ -89,24 +133,29 @@
                       v-else
                       :src="busPhotoSrc(r)"
                       alt=""
-                      class="size-16 shrink-0 rounded-full border-2 border-gray-200 object-cover object-center dark:border-primary-600"
+                      class="h-11 w-11 shrink-0 rounded-full border border-primary-800/30 object-cover dark:border-primary-700/50"
                       loading="lazy"
                       @error="onPhotoError(busPhotoBrokenKey(r))"
                     />
                   </td>
-                  <td class="px-4 py-3">
-                    <p class="font-medium text-gray-900 dark:text-white">{{ r.marques ?? r.Marques ?? '—' }}</p>
-                    <p class="text-xs text-gray-500 dark:text-primary-400/70">
+                  <td class="whitespace-nowrap px-4 py-4 align-middle tabular-nums text-gray-800 dark:text-gray-200">
+                    {{ r.numeroBus ?? r.NumeroBus ?? '—' }}
+                  </td>
+                  <td class="px-6 py-4">
+                    <p class="font-medium text-gray-900 dark:text-white">
+                      {{ r.marques ?? r.Marques ?? '—' }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-primary-300/60">
                       {{ r.nombreSiege ?? r.NombreSiege ?? '—' }} places
                     </p>
                   </td>
-                  <td class="px-4 py-3 text-gray-800 dark:text-gray-200">
-                    {{ busRowTypeLabel(r) }}
+                  <td class="px-6 py-4 text-sm">
+                    <div class="font-medium text-primary-700 dark:text-primary-400">{{ busRowTypeLabel(r) }}</div>
                   </td>
-                  <td class="px-4 py-3 font-mono text-xs text-gray-700 dark:text-primary-200/90">
+                  <td class="px-6 py-4 font-mono text-sm text-gray-800 dark:text-gray-200">
                     {{ r.numeroDePlaque ?? r.NumeroDePlaque ?? '—' }}
                   </td>
-                  <td class="px-4 py-3">
+                  <td class="px-6 py-4">
                     <span
                       class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
                       :class="
@@ -118,17 +167,17 @@
                       {{ rowStatut(r) ? 'actif' : 'inactif' }}
                     </span>
                   </td>
-                  <td class="whitespace-nowrap px-4 py-3 font-medium">
+                  <td class="whitespace-nowrap px-6 py-4 text-sm font-medium">
                     <button
                       type="button"
-                      class="mr-3 text-gray-600 hover:text-gray-800 dark:text-primary-300 dark:hover:text-primary-200"
+                      class="mr-3 text-primary-600 transition hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
                       @click="openView(r)"
                     >
                       Voir
                     </button>
                     <button
                       type="button"
-                      class="mr-3 text-primary-600 hover:text-primary-500 dark:text-primary-400"
+                      class="mr-3 text-primary-600 transition hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
                       @click="openEdit(r)"
                     >
                       Modifier
@@ -138,8 +187,8 @@
                       :disabled="togglingId === (r.idBus ?? r.IdBus)"
                       :class="
                         rowStatut(r)
-                          ? 'text-amber-600 hover:text-amber-700 dark:text-amber-400'
-                          : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
+                          ? 'text-amber-600 hover:text-amber-700 dark:text-amber-400/90 dark:hover:text-amber-300'
+                          : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300'
                       "
                       class="transition disabled:opacity-50"
                       @click="toggleStatut(r)"
@@ -206,6 +255,23 @@
                     viewOnly ? 'cursor-default bg-gray-50 dark:bg-primary-900/50' : 'bg-white',
                   ]"
                 />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-primary-200/90">N° de bus *</label>
+                <input
+                  v-model.number="form.numeroBus"
+                  type="number"
+                  min="1"
+                  step="1"
+                  :readonly="viewOnly"
+                  :class="[
+                    'mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 tabular-nums text-gray-900 dark:border-primary-700 dark:bg-primary-900/80 dark:text-gray-100',
+                    viewOnly ? 'cursor-default bg-gray-50 dark:bg-primary-900/50' : 'bg-white',
+                  ]"
+                />
+                <p v-if="!viewOnly" class="mt-1 text-xs text-gray-500 dark:text-primary-400/75">
+                  Identifiant métier du bus (distinct de la plaque d’immatriculation).
+                </p>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-primary-200/90">Places *</label>
@@ -367,8 +433,8 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
+import { useAdminListSearch } from '@/composables/useAdminListSearch'
 import { useTenantSocieteId } from '@/composables/useTenantSocieteId'
 import {
   listBusArray,
@@ -381,10 +447,10 @@ import {
 } from '@/services/busService'
 import { listTypeBusArray } from '@/services/typeBusService'
 import { notify } from '@/utils/notify'
+import { useAdminModuleGreeting } from '@/composables/useAdminModuleGreeting'
 
-const route = useRoute()
 const { idSocieteForSave } = useTenantSocieteId()
-const isSuperAdminContext = computed(() => route.path.startsWith('/super-admin'))
+const headerIntro = useAdminModuleGreeting('bienvenue — parc véhicules et statut ci-dessous.')
 
 const rows = ref([])
 const types = ref([])
@@ -460,6 +526,32 @@ function busRowTypeLabel(r) {
   }
   return '—'
 }
+
+function busTextMatch(r, q) {
+  const parts = [
+    r.marques,
+    r.Marques,
+    r.numeroBus,
+    r.NumeroBus,
+    r.numeroDePlaque,
+    r.NumeroDePlaque,
+    r.nombreSiege,
+    r.NombreSiege,
+    busRowTypeLabel(r),
+    r.nomSociete,
+    r.NomSociete,
+  ]
+  const blob = parts.map((x) => String(x ?? '').toLowerCase()).join(' ')
+  return blob.includes(q)
+}
+
+const { searchQuery, statutFilter, filteredRows, hasActiveFilters, clearFilters } = useAdminListSearch(
+  rows,
+  busTextMatch,
+  {
+    rowStatut,
+  }
+)
 
 function busPhotoBrokenKey(r) {
   if (!r) return ''
@@ -673,7 +765,7 @@ async function toggleStatut(r) {
   if (!ok) return
   togglingId.value = id
   try {
-    await toggleBusStatut(id)
+    await toggleBusStatut(r)
     await load()
     await notify.toast.success(wasActive ? 'Bus désactivé.' : 'Bus réactivé.')
   } catch (e) {

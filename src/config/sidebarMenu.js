@@ -41,13 +41,18 @@ export const SIDEBAR_ADMIN_ENABLED_KEYS = [
   'destinations',
   'buses',
   'bus-types',
+  'voyages',
+  'reservations',
+  'billets',
 ]
 
 /** Menu gérant : inchangé côté clés (opérations / admin paths), filtré séparément. */
 const SIDEBAR_GERANT_ENABLED_KEYS = [
   'dashboard',
   'trips',
+  'voyages',
   'reservations',
+  'billets',
   'agents',
   'destinations',
   'buses',
@@ -211,9 +216,30 @@ function buildSuperAdminMinimal(ctx) {
   ]
   const enabled = new Set(SIDEBAR_ADMIN_ENABLED_KEYS)
   const busNav = makeBusNavItem({ enabled, basePath: '/super-admin' })
+  const voyageRow = {
+    key: 'voyages',
+    icon: Calendar2Line,
+    name: 'Voyages',
+    path: '/super-admin/voyages',
+  }
+  const reservationsRow = {
+    key: 'reservations',
+    icon: ListIcon,
+    name: 'Réservations',
+    path: '/admin/reservations',
+  }
+  const billetsRow = {
+    key: 'billets',
+    icon: DocsIcon,
+    name: 'Billets',
+    path: '/admin/billets',
+  }
   const items = [
     ...all.filter((row) => enabled.has(row.key)).map(({ key: _k, ...rest }) => rest),
     ...(busNav ? [(({ key: _k, ...rest }) => rest)(busNav)] : []),
+    ...(enabled.has('voyages') ? [(({ key: _k, ...rest }) => rest)(voyageRow)] : []),
+    ...(enabled.has('reservations') ? [(({ key: _k, ...rest }) => rest)(reservationsRow)] : []),
+    ...(enabled.has('billets') ? [(({ key: _k, ...rest }) => rest)(billetsRow)] : []),
   ]
   return [{ title: 'Super-Admin', items }]
 }
@@ -251,6 +277,27 @@ function buildAdminModuleMenu(ctx) {
   const busNav = makeBusNavItem({ enabled, basePath })
   if (busNav) candidates.push(busNav)
 
+  candidates.push({
+    key: 'voyages',
+    icon: Calendar2Line,
+    name: 'Voyages',
+    path: isSa ? `${basePath}/voyages` : '/admin/voyages',
+  })
+
+  candidates.push({
+    key: 'reservations',
+    icon: ListIcon,
+    name: 'Réservations',
+    path: '/admin/reservations',
+  })
+
+  candidates.push({
+    key: 'billets',
+    icon: DocsIcon,
+    name: 'Billets',
+    path: '/admin/billets',
+  })
+
   const items = candidates
     .filter((row) => {
       if (row.subItems?.length) return enabled.has('bus-types') || enabled.has('buses')
@@ -273,10 +320,24 @@ function buildGerantMenu(ctx) {
       requiredModule: 'operations',
     },
     {
+      key: 'voyages',
+      icon: Calendar2Line,
+      name: 'Voyages',
+      path: '/admin/voyages',
+      requiredModule: 'operations',
+    },
+    {
       key: 'reservations',
       icon: Calendar2Line,
       name: 'Réservations',
       path: '/admin/reservations',
+      requiredModule: 'operations',
+    },
+    {
+      key: 'billets',
+      icon: DocsIcon,
+      name: 'Billets',
+      path: '/admin/billets',
       requiredModule: 'operations',
     },
     {
@@ -308,9 +369,9 @@ function buildGerantMenu(ctx) {
     requiredModule: 'operations',
   })
   if (busNav) {
-    const idx = candidates.findIndex((r) => r.key === 'transporteurs')
-    if (idx === -1) candidates.push(busNav)
-    else candidates.splice(idx, 0, busNav)
+    const voyIdx = candidates.findIndex((r) => r.key === 'voyages')
+    if (voyIdx === -1) candidates.push(busNav)
+    else candidates.splice(voyIdx, 0, busNav)
   }
 
   const items = candidates

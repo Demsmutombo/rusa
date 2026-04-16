@@ -31,6 +31,24 @@
         {{ error }}
       </p>
 
+      <AdminListToolbar
+        v-if="!loading && societes.length"
+        :search="searchQuery"
+        :statut="statutFilter"
+        :filtered-count="filteredRows.length"
+        :total-count="societes.length"
+        placeholder="Nom, email, téléphone, type…"
+        @update:search="searchQuery = $event"
+        @update:statut="statutFilter = $event"
+        @clear="clearFilters"
+      />
+      <div
+        v-if="!loading && societes.length && !filteredRows.length"
+        class="rounded-xl border border-dashed border-primary-200 bg-primary-50/30 py-10 text-center text-sm text-gray-500 dark:border-primary-800 dark:bg-primary-950/20 dark:text-gray-400"
+      >
+        Aucun résultat pour cette recherche ou ce filtre de statut.
+      </div>
+
       <!-- Mobile : cartes -->
       <div class="md:hidden space-y-3">
         <div
@@ -39,9 +57,15 @@
         >
           Chargement…
         </div>
+        <p
+          v-else-if="!societes.length"
+          class="rounded-xl border border-dashed border-primary-200 bg-primary-50/30 py-10 text-center text-sm text-gray-500 dark:border-primary-800 dark:bg-primary-950/20 dark:text-gray-400"
+        >
+          Aucune société
+        </p>
         <template v-else>
           <div
-            v-for="s in societes"
+            v-for="s in filteredRows"
             :key="'m-' + s.idSociete"
             class="rusa-card-static overflow-hidden p-4 dark:border-primary-800 dark:bg-gray-900/40"
           >
@@ -135,12 +159,6 @@
               </button>
             </div>
           </div>
-          <p
-            v-if="societes.length === 0"
-            class="rounded-xl border border-dashed border-primary-200 bg-primary-50/30 py-10 text-center text-sm text-gray-500 dark:border-primary-800 dark:bg-primary-950/20 dark:text-gray-400"
-          >
-            Aucune société
-          </p>
         </template>
       </div>
 
@@ -177,7 +195,7 @@
                 </td>
               </tr>
               <tr
-                v-for="s in societes"
+                v-for="s in filteredRows"
                 v-else
                 :key="s.idSociete"
                 class="hover:bg-primary-50/50 dark:hover:bg-primary-950/25"
@@ -558,7 +576,10 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
+import AdminListToolbar from '@/components/admin/AdminListToolbar.vue'
+import { useAdminListSearch } from '@/composables/useAdminListSearch'
 import { useSidebar } from '@/composables/useSidebar'
 import { notify } from '@/utils/notify'
 import {
@@ -570,6 +591,7 @@ import {
 } from '@/services/societeService'
 
 const route = useRoute()
+const authStore = useAuthStore()
 const { isExpanded, isHovered } = useSidebar()
 
 /** lg+ : padding-gauche = largeur sidebar + marge (aligné sur DefaultLayout) */
@@ -583,11 +605,15 @@ const isSuperAdminSocietesRoute = computed(() => route.name === 'SuperAdminSocie
 const pageTitle = computed(() =>
   isSuperAdminSocietesRoute.value ? 'Sociétés (Super-Admin)' : 'Agences (Sociétés)'
 )
-const pageSubtitle = computed(() =>
-  isSuperAdminSocietesRoute.value
-    ? 'Fiches détaillées via GET /api/Societe — création, modification et suppression.'
-    : 'Gérer les sociétés de transport Rusa Travel'
-)
+const pageSubtitle = computed(() => {
+  const full = String(authStore.user?.nomComplet || authStore.user?.NomComplet || '').trim()
+  const first = full ? full.split(/\s+/)[0] : ''
+  const greet = first ? `${first}, ` : ''
+  const tail = isSuperAdminSocietesRoute.value
+    ? 'bienvenue — sociétés et gestion ci-dessous.'
+    : 'bienvenue — agences et sociétés ci-dessous.'
+  return greet + tail
+})
 
 const societes = ref([])
 const loading = ref(false)
@@ -615,6 +641,31 @@ const emptyForm = () => ({
 })
 
 const form = ref(emptyForm())
+
+function societeRowStatut(s) {
+  const v = s?.statut
+  return !(v === false || v === 0 || v === '0' || String(v).toLowerCase() === 'false')
+}
+
+function societeTextMatch(s, q) {
+  const blob = [
+    s.nom,
+    s.description,
+    s.nomCompletResponsable,
+    s.type,
+    s.devise,
+    s.emailContact,
+    s.telephone,
+    s.siteWeb,
+  ]
+    .map((x) => String(x ?? '').toLowerCase())
+    .join(' ')
+  return blob.includes(q)
+}
+
+const { searchQuery, statutFilter, filteredRows, clearFilters } = useAdminListSearch(societes, societeTextMatch, {
+  rowStatut: societeRowStatut,
+})
 
 async function load() {
   loading.value = true

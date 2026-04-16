@@ -14,11 +14,10 @@
           Administrateur
         </p>
         <h1 class="mt-1 text-xl font-bold leading-tight text-white sm:text-2xl">Tableau de bord</h1>
-        <p class="mt-2 max-w-2xl text-sm text-primary-100/95">
-          Vue d’ensemble de votre société. Les blocs ci-dessous s’affichent progressivement pour faciliter la
-          lecture.
+        <p class="mt-2 max-w-2xl text-sm leading-relaxed text-primary-100/95">
+          {{ dashboardIntro }}
         </p>
-        <p v-if="subtitleLine" class="mt-2 text-xs text-primary-200/90">{{ subtitleLine }}</p>
+        <p v-if="subtitleLine" class="mt-2 text-xs font-medium text-primary-200/90">{{ subtitleLine }}</p>
       </div>
     </header>
 
@@ -53,40 +52,30 @@
             <span class="block font-medium text-gray-900 group-hover:text-primary-700 dark:text-white dark:group-hover:text-primary-300">
               {{ item.label }}
             </span>
-            <span class="mt-0.5 block text-xs text-gray-500 dark:text-primary-400/75">{{ item.hint }}</span>
+            <span class="mt-0.5 block text-xs text-gray-500 dark:text-primary-400/75">{{ item.hint(counts, countsReady) }}</span>
           </span>
         </RouterLink>
       </div>
-    </section>
-
-    <!-- 3. Rappel -->
-    <section
-      class="admin-dash-enter rusa-card-static rounded-xl border border-gray-200/90 p-4 sm:p-5 dark:border-primary-800/60 dark:bg-primary-950/40"
-      :style="staggerStyle(2 + quickLinks.length)"
-    >
-      <h2 class="text-sm font-semibold text-gray-900 dark:text-white">À savoir</h2>
-      <ul class="mt-2 list-inside list-disc space-y-1.5 text-sm text-gray-600 dark:text-primary-300/80">
-        <li>
-          Destinations, types de bus et bus se gèrent depuis le menu ou les accès rapides (création / modification,
-          statut actif ou inactif, pas de suppression).
-        </li>
-        <li>Les agents se gèrent depuis le menu ou les accès rapides.</li>
-        <li>Les indicateurs détaillés (graphiques, exports) pourront être enrichis plus tard.</li>
-      </ul>
     </section>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
   UserCircleIcon,
   MapPinIcon,
   TruckIcon,
   QueueListIcon,
+  CalendarDaysIcon,
 } from '@heroicons/vue/24/outline'
 import { useAuthStore } from '@/stores/auth'
+import { listAgentsArray } from '@/services/agentService'
+import { listDestinationsArray } from '@/services/destinationService'
+import { listTypeBusArray } from '@/services/typeBusService'
+import { listBusArray } from '@/services/busService'
+import { listReservationsArray } from '@/services/reservationService'
 
 const authStore = useAuthStore()
 
@@ -96,22 +85,101 @@ function staggerStyle(step) {
   return { animationDelay: `${step * DELAY_MS}ms` }
 }
 
-const subtitleLine = computed(() => {
-  const parts = []
-  const u = authStore.user
-  const name = u?.nomComplet || u?.NomComplet
-  if (name) parts.push(String(name).trim())
-  if (typeof u?.societe === 'string' && u.societe.trim()) parts.push(u.societe.trim())
-  else if (u?.societe?.nom) parts.push(String(u.societe.nom))
-  return parts.length ? parts.join(' · ') : ''
+/** Prénom pour une formule d’accueil sobre (ex. « Israel » depuis « Israel Mutombo »). */
+function firstNameFromUser(u) {
+  const full = String(u?.nomComplet || u?.NomComplet || '').trim()
+  if (!full) return ''
+  return full.split(/\s+/)[0] || full
+}
+
+const dashboardIntro = computed(() => {
+  const first = firstNameFromUser(authStore.user)
+  const greet = first ? `${first}, ` : ''
+  return `${greet}bienvenue — vue d’ensemble et raccourcis vers vos modules.`
 })
 
-const quickLinks = [
-  { to: '/admin/agents', label: 'Agents', hint: 'Employés de la société', icon: UserCircleIcon },
-  { to: '/admin/destinations', label: 'Destinations', hint: 'Trajets et tarifs (statut sans suppression)', icon: MapPinIcon },
-  { to: '/admin/bus-types', label: 'Types de bus', hint: 'Catégories de véhicules', icon: QueueListIcon },
-  { to: '/admin/buses', label: 'Bus', hint: 'Parc véhicules', icon: TruckIcon },
-]
+/** Contexte société uniquement (le prénom est dans le paragraphe principal). */
+const subtitleLine = computed(() => {
+  const u = authStore.user
+  if (typeof u?.societe === 'string' && u.societe.trim()) return u.societe.trim()
+  if (u?.societe?.nom) return String(u.societe.nom).trim()
+  return ''
+})
+
+/** Compteurs alignés sur les mêmes APIs que les écrans liste. */
+const counts = ref({ agents: 0, destinations: 0, busTypes: 0, buses: 0, reservations: 0 })
+const countsReady = ref(false)
+
+function hintAgents(c, ready) {
+  if (!ready) return 'Employés de la société'
+  const n = c.agents
+  if (n === 0) return 'Aucun employé dans la société'
+  if (n === 1) return '1 employé dans la société'
+  return `${n} employés dans la société`
+}
+
+function hintDestinations(c, ready) {
+  if (!ready) return 'Trajets et tarifs (statut sans suppression)'
+  const n = c.destinations
+  if (n === 0) return 'Aucune destination · trajets et tarifs (statut sans suppression)'
+  if (n === 1) return '1 destination · trajets et tarifs (statut sans suppression)'
+  return `${n} destinations · trajets et tarifs (statut sans suppression)`
+}
+
+function hintBusTypes(c, ready) {
+  if (!ready) return 'Catégories de véhicules'
+  const n = c.busTypes
+  if (n === 0) return 'Aucune catégorie de véhicule'
+  if (n === 1) return '1 catégorie de véhicule'
+  return `${n} catégories de véhicules`
+}
+
+function hintBuses(c, ready) {
+  if (!ready) return 'Parc véhicules'
+  const n = c.buses
+  if (n === 0) return 'Aucun bus dans le parc'
+  if (n === 1) return '1 bus dans le parc'
+  return `${n} bus dans le parc`
+}
+
+function hintReservations(c, ready) {
+  if (!ready) return 'Liste et statuts (API)'
+  const n = c.reservations
+  if (n === 0) return 'Aucune réservation pour la société'
+  if (n === 1) return '1 réservation enregistrée'
+  return `${n} réservations enregistrées`
+}
+
+const quickLinks = computed(() => [
+  { to: '/admin/agents', label: 'Agents', hint: hintAgents, icon: UserCircleIcon },
+  { to: '/admin/destinations', label: 'Destinations', hint: hintDestinations, icon: MapPinIcon },
+  { to: '/admin/bus-types', label: 'Types de bus', hint: hintBusTypes, icon: QueueListIcon },
+  { to: '/admin/buses', label: 'Bus', hint: hintBuses, icon: TruckIcon },
+  { to: '/admin/reservations', label: 'Réservations', hint: hintReservations, icon: CalendarDaysIcon },
+])
+
+onMounted(async () => {
+  try {
+    const [agents, destinations, busTypes, buses, reservations] = await Promise.all([
+      listAgentsArray().catch(() => []),
+      listDestinationsArray().catch(() => []),
+      listTypeBusArray().catch(() => []),
+      listBusArray().catch(() => []),
+      listReservationsArray().catch(() => []),
+    ])
+    counts.value = {
+      agents: Array.isArray(agents) ? agents.length : 0,
+      destinations: Array.isArray(destinations) ? destinations.length : 0,
+      busTypes: Array.isArray(busTypes) ? busTypes.length : 0,
+      buses: Array.isArray(buses) ? buses.length : 0,
+      reservations: Array.isArray(reservations) ? reservations.length : 0,
+    }
+  } catch {
+    counts.value = { agents: 0, destinations: 0, busTypes: 0, buses: 0, reservations: 0 }
+  } finally {
+    countsReady.value = true
+  }
+})
 </script>
 
 <style scoped>

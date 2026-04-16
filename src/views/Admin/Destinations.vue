@@ -19,7 +19,7 @@
           </router-link>
           <h1 class="text-xl font-bold leading-tight text-white sm:text-2xl">Destinations</h1>
           <p class="mt-1 text-sm text-primary-100 sm:text-base">
-            Trajets et tarifs. Aucune suppression : le statut actif / inactif est basculé via l’API.
+            {{ headerIntro }}
           </p>
         </div>
         <button
@@ -41,100 +41,187 @@
       <div
         class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-primary-800/60 dark:bg-primary-950/70 dark:shadow-none"
       >
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm">
-            <thead class="border-b border-gray-200 bg-gray-50 dark:border-primary-800/60 dark:bg-primary-900/50">
-              <tr>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
-                  Trajet
-                </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
-                  Montant
-                </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
-                  Société
-                </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
-                  Statut
-                </th>
-                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-primary-800/50">
-              <tr v-if="loading">
-                <td colspan="5" class="px-4 py-10 text-center text-gray-500 dark:text-primary-400/80">Chargement…</td>
-              </tr>
-              <tr v-else-if="!rows.length">
-                <td colspan="5" class="px-4 py-10 text-center text-gray-500 dark:text-primary-400/80">
-                  Aucune destination.
-                </td>
-              </tr>
-              <template v-else>
-              <tr
-                v-for="r in rows"
-                :key="r.idDestination ?? r.IdDestination"
-                class="hover:bg-gray-50/80 dark:hover:bg-primary-900/35"
-              >
-                <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                  {{ r.villeDepart ?? r.VilleDepart }} → {{ r.villeArrivee ?? r.VilleArrivee }}
-                </td>
-                <td class="px-4 py-3 tabular-nums text-gray-800 dark:text-gray-200">
-                  {{ formatMontant(r.montant ?? r.Montant) }}
-                  <span class="text-xs text-gray-500 dark:text-primary-400/70">{{
-                    r.deviseSociete ?? r.DeviseSociete ?? ''
-                  }}</span>
-                </td>
-                <td class="px-4 py-3 text-gray-700 dark:text-primary-200/90">
-                  {{ r.nomSociete ?? r.NomSociete ?? '—' }}
-                </td>
-                <td class="px-4 py-3">
-                  <span
-                    class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
-                    :class="
-                      rowStatut(r)
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'
-                        : 'bg-gray-100 text-gray-700 dark:bg-primary-800/60 dark:text-primary-200'
-                    "
-                  >
-                    {{ rowStatut(r) ? 'actif' : 'inactif' }}
-                  </span>
-                </td>
-                <td class="whitespace-nowrap px-4 py-3 font-medium">
-                  <button
-                    type="button"
-                    class="mr-3 text-gray-600 hover:text-gray-800 dark:text-primary-300 dark:hover:text-primary-200"
-                    @click="openView(r)"
-                  >
-                    Voir
-                  </button>
-                  <button
-                    type="button"
-                    class="mr-3 text-primary-600 hover:text-primary-500 dark:text-primary-400"
-                    @click="openEdit(r)"
-                  >
-                    Modifier
-                  </button>
-                  <button
-                    type="button"
-                    :disabled="togglingId === (r.idDestination ?? r.IdDestination)"
-                    :class="
-                      rowStatut(r)
-                        ? 'text-amber-600 hover:text-amber-700 dark:text-amber-400'
-                        : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
-                    "
-                    class="transition disabled:opacity-50"
-                    @click="toggleStatut(r)"
-                  >
-                    {{ rowStatut(r) ? 'Désactiver' : 'Réactiver' }}
-                  </button>
-                </td>
-              </tr>
-              </template>
-            </tbody>
-          </table>
+        <div
+          v-if="loading"
+          class="px-4 py-10 text-center text-sm text-gray-500 dark:text-primary-400/80"
+        >
+          Chargement…
         </div>
+        <div
+          v-else-if="!rows.length"
+          class="px-4 py-10 text-center text-sm text-gray-500 dark:text-primary-400/80"
+        >
+          Aucune destination.
+        </div>
+        <template v-else>
+          <AdminListToolbar
+            v-if="rows.length"
+            :search="searchQuery"
+            :statut="statutFilter"
+            :filtered-count="filteredRows.length"
+            :total-count="rows.length"
+            placeholder="Ville, société, montant…"
+            @update:search="searchQuery = $event"
+            @update:statut="statutFilter = $event"
+            @clear="clearFilters"
+          />
+          <div
+            v-if="rows.length && !filteredRows.length"
+            class="px-4 py-12 text-center text-sm text-gray-500 dark:text-primary-400/80"
+          >
+            Aucun résultat pour cette recherche ou ce filtre de statut.
+          </div>
+          <template v-else-if="filteredRows.length">
+          <div class="hidden overflow-x-auto md:block">
+            <table class="w-full min-w-[560px] text-left text-sm">
+              <thead class="border-b border-gray-200 bg-gray-50 dark:border-primary-800/60 dark:bg-primary-900/50">
+                <tr>
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                    Trajet
+                  </th>
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                    Montant
+                  </th>
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                    Société
+                  </th>
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                    Statut
+                  </th>
+                  <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-200 dark:divide-primary-800/50">
+                <tr
+                  v-for="r in filteredRows"
+                  :key="r.idDestination ?? r.IdDestination"
+                  class="hover:bg-gray-50/80 dark:hover:bg-primary-900/35"
+                >
+                  <td class="max-w-[220px] px-4 py-3 font-medium text-gray-900 dark:text-white">
+                    <span class="line-clamp-2">
+                      {{ r.villeDepart ?? r.VilleDepart }} → {{ r.villeArrivee ?? r.VilleArrivee }}
+                    </span>
+                  </td>
+                  <td class="whitespace-nowrap px-4 py-3 tabular-nums text-gray-800 dark:text-gray-200">
+                    {{ formatMontant(r.montant ?? r.Montant) }}
+                  </td>
+                  <td class="max-w-[160px] px-4 py-3 text-gray-700 dark:text-primary-200/90">
+                    <span class="line-clamp-2">{{ r.nomSociete ?? r.NomSociete ?? '—' }}</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <span
+                      class="inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium"
+                      :class="
+                        rowStatut(r)
+                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'
+                          : 'bg-gray-100 text-gray-700 dark:bg-primary-800/60 dark:text-primary-200'
+                      "
+                    >
+                      {{ rowStatut(r) ? 'actif' : 'inactif' }}
+                    </span>
+                  </td>
+                  <td class="whitespace-nowrap px-4 py-3 font-medium">
+                    <button
+                      type="button"
+                      class="mr-3 text-gray-600 hover:text-gray-800 dark:text-primary-300 dark:hover:text-primary-200"
+                      @click="openView(r)"
+                    >
+                      Voir
+                    </button>
+                    <button
+                      type="button"
+                      class="mr-3 text-primary-600 hover:text-primary-500 dark:text-primary-400"
+                      @click="openEdit(r)"
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      type="button"
+                      :disabled="togglingId === (r.idDestination ?? r.IdDestination)"
+                      :class="
+                        rowStatut(r)
+                          ? 'text-amber-600 hover:text-amber-700 dark:text-amber-400'
+                          : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400'
+                      "
+                      class="transition disabled:opacity-50"
+                      @click="toggleStatut(r)"
+                    >
+                      {{ rowStatut(r) ? 'Désactiver' : 'Réactiver' }}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="divide-y divide-gray-200 dark:divide-primary-800/50 md:hidden">
+            <article
+              v-for="r in filteredRows"
+              :key="`m-${r.idDestination ?? r.IdDestination}`"
+              class="space-y-3 p-4"
+            >
+              <div class="flex flex-wrap items-start justify-between gap-2">
+                <p class="min-w-0 text-base font-semibold text-gray-900 dark:text-white">
+                  {{ r.villeDepart ?? r.VilleDepart }} → {{ r.villeArrivee ?? r.VilleArrivee }}
+                </p>
+                <span
+                  class="inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium"
+                  :class="
+                    rowStatut(r)
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300'
+                      : 'bg-gray-100 text-gray-700 dark:bg-primary-800/60 dark:text-primary-200'
+                  "
+                >
+                  {{ rowStatut(r) ? 'actif' : 'inactif' }}
+                </span>
+              </div>
+              <dl class="grid gap-2 text-sm">
+                <div class="flex justify-between gap-3">
+                  <dt class="text-gray-500 dark:text-primary-400/80">Montant</dt>
+                  <dd class="tabular-nums text-gray-800 dark:text-gray-200">
+                    {{ formatMontant(r.montant ?? r.Montant) }}
+                  </dd>
+                </div>
+                <div class="flex justify-between gap-3">
+                  <dt class="text-gray-500 dark:text-primary-400/80">Société</dt>
+                  <dd class="text-right text-gray-800 dark:text-gray-200">{{ r.nomSociete ?? r.NomSociete ?? '—' }}</dd>
+                </div>
+              </dl>
+              <div class="flex flex-wrap gap-2 border-t border-gray-100 pt-3 dark:border-primary-800/50">
+                <button
+                  type="button"
+                  class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium text-gray-800 dark:border-primary-700 dark:bg-primary-900/40 dark:text-primary-200"
+                  @click="openView(r)"
+                >
+                  Voir
+                </button>
+                <button
+                  type="button"
+                  class="rounded-lg border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-primary-800 dark:border-primary-700 dark:bg-primary-900/50 dark:text-primary-200"
+                  @click="openEdit(r)"
+                >
+                  Modifier
+                </button>
+                <button
+                  type="button"
+                  :disabled="togglingId === (r.idDestination ?? r.IdDestination)"
+                  class="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-medium transition disabled:opacity-50 dark:border-primary-700 dark:bg-primary-900/40"
+                  :class="
+                    rowStatut(r)
+                      ? 'text-amber-800 dark:text-amber-300'
+                      : 'text-emerald-800 dark:text-emerald-300'
+                  "
+                  @click="toggleStatut(r)"
+                >
+                  {{ rowStatut(r) ? 'Désactiver' : 'Réactiver' }}
+                </button>
+              </div>
+            </article>
+          </div>
+          </template>
+        </template>
       </div>
 
       <Teleport to="body">
@@ -203,9 +290,6 @@
                       : 'bg-white',
                   ]"
                 />
-                <p v-if="viewOnly && viewContext" class="mt-1 text-xs text-gray-500 dark:text-primary-400/80">
-                  {{ viewContext.deviseSociete ?? viewContext.DeviseSociete ?? '' }}
-                </p>
               </div>
               <div v-if="viewOnly" class="flex items-center gap-2">
                 <span class="text-sm font-medium text-gray-700 dark:text-primary-200/90">Statut</span>
@@ -264,7 +348,10 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
+import AdminListToolbar from '@/components/admin/AdminListToolbar.vue'
+import { useAdminListSearch } from '@/composables/useAdminListSearch'
 import { useTenantSocieteId } from '@/composables/useTenantSocieteId'
+import { useAdminModuleGreeting } from '@/composables/useAdminModuleGreeting'
 import {
   listDestinationsArray,
   createDestination,
@@ -272,9 +359,15 @@ import {
   toggleDestinationStatut,
 } from '@/services/destinationService'
 import { notify } from '@/utils/notify'
+import {
+  mergeDestinationsWithInactiveCache,
+  rememberInactiveDestination,
+  forgetInactiveDestination,
+} from '@/utils/destinationInactiveCache'
 
 const route = useRoute()
 const { idSocieteForSave } = useTenantSocieteId()
+const headerIntro = useAdminModuleGreeting('bienvenue — trajets, tarifs et statut ci-dessous.')
 
 const isSuperAdminContext = computed(() => route.path.startsWith('/super-admin'))
 
@@ -301,6 +394,26 @@ function rowStatut(r) {
   return !(v === false || v === 0 || v === '0' || String(v).toLowerCase() === 'false')
 }
 
+function destinationTextMatch(r, q) {
+  const blob = [
+    r.villeDepart,
+    r.VilleDepart,
+    r.villeArrivee,
+    r.VilleArrivee,
+    r.nomSociete,
+    r.NomSociete,
+    r.montant,
+    r.Montant,
+  ]
+    .map((x) => String(x ?? '').toLowerCase())
+    .join(' ')
+  return blob.includes(q)
+}
+
+const { searchQuery, statutFilter, filteredRows, clearFilters } = useAdminListSearch(rows, destinationTextMatch, {
+  rowStatut,
+})
+
 function formatMontant(v) {
   const n = Number(v)
   if (!Number.isFinite(n)) return '—'
@@ -311,7 +424,8 @@ async function load() {
   loading.value = true
   error.value = ''
   try {
-    rows.value = await listDestinationsArray()
+    const fromApi = await listDestinationsArray()
+    rows.value = mergeDestinationsWithInactiveCache(fromApi)
   } catch (e) {
     error.value = e?.message || 'Erreur chargement'
     rows.value = []
@@ -423,7 +537,24 @@ async function toggleStatut(r) {
   togglingId.value = id
   try {
     await toggleDestinationStatut(id)
-    await load()
+    // Ne pas recharger toute la liste : certains GET n’incluent que les destinations actives.
+    const nextActive = !wasActive
+    const idNum = Number(id)
+    let updatedRow = null
+    rows.value = rows.value.map((x) => {
+      const xid = Number(x.idDestination ?? x.IdDestination)
+      if (xid !== idNum) return x
+      updatedRow = { ...x, statut: nextActive, Statut: nextActive }
+      return updatedRow
+    })
+    if (nextActive) {
+      forgetInactiveDestination(idNum)
+    } else if (updatedRow) {
+      rememberInactiveDestination(updatedRow)
+    }
+    // Si le filtre « Actifs » / « Inactifs » est actif, la ligne disparaîtrait du tableau : repasser sur « Tous ».
+    if (!nextActive && statutFilter.value === 'active') statutFilter.value = 'all'
+    if (nextActive && statutFilter.value === 'inactive') statutFilter.value = 'all'
     await notify.toast.success(wasActive ? 'Destination désactivée.' : 'Destination réactivée.')
   } catch (e) {
     await notify.error('Statut', e?.message || 'Impossible de modifier le statut.')

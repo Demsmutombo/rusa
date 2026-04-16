@@ -1,6 +1,7 @@
 /**
  * API Bus — Rusa Travel
- * Pas de DELETE : désactivation via PUT …/toggle-statut
+ * Pas de DELETE : désactivation via PUT /api/Bus/{id} (corps complet).
+ * L’endpoint dédié …/toggle-statut peut renvoyer 500 côté serveur ; on aligne sur TypeBus (PUT complet).
  */
 
 import { useAuthStore } from '@/stores/auth'
@@ -111,10 +112,31 @@ export function updateBus(id, body) {
   return apiPut(`/api/Bus/${nid}`, body, JSON_ACCEPT)
 }
 
-export function toggleBusStatut(id) {
-  const nid = Number(id)
-  if (!Number.isFinite(nid) || nid <= 0) {
+function rowStatutActif(row) {
+  if (!row || typeof row !== 'object') return true
+  const v = row.statut ?? row.Statut
+  return !(v === false || v === 0 || v === '0' || String(v).toLowerCase() === 'false')
+}
+
+/**
+ * Bascule actif/inactif en réutilisant PUT /api/Bus/{id} (même contrat que la fiche « Modifier »).
+ * @param {Record<string, unknown>} row — ligne liste (idBus, marques, idTypeBus, etc.)
+ */
+export function toggleBusStatut(row) {
+  const id = Number(row?.idBus ?? row?.IdBus)
+  if (!Number.isFinite(id) || id <= 0) {
     return Promise.reject(new Error('Identifiant bus invalide.'))
   }
-  return apiPut(`/api/Bus/${nid}/toggle-statut`, {}, JSON_ACCEPT)
+  const next = !rowStatutActif(row)
+  return updateBus(id, {
+    idBus: id,
+    marques: String(row.marques ?? row.Marques ?? '').trim(),
+    numeroBus: Number(row.numeroBus ?? row.NumeroBus) || 0,
+    idTypeBus: Number(row.idTypeBus ?? row.IdTypeBus) || 0,
+    nombreSiege: Number(row.nombreSiege ?? row.NombreSiege) || 0,
+    idSociete: Number(row.idSociete ?? row.IdSociete) || 0,
+    numeroDePlaque: String(row.numeroDePlaque ?? row.NumeroDePlaque ?? '').trim(),
+    photo: pickBusPhotoRaw(row) || '',
+    statut: next,
+  })
 }
