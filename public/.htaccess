@@ -1,0 +1,18 @@
+# Rusa Travel - Apache production
+# Vue SPA (history): serve real files/dirs; else fallback to index.html
+# Subfolder deploy: set RewriteBase (e.g. /my-app/)
+
+<IfModule mod_negotiation.c>
+  Options -MultiViews
+</IfModule>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+Options -Indexes
