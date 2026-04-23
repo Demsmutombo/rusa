@@ -2,7 +2,15 @@ import axios from 'axios'
 import { getApiOrigin } from '@/config/apiOrigin'
 import { useAuthStore } from '@/stores/auth'
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || getApiOrigin()
+function resolveApiClientBaseUrl() {
+  const disable = String(import.meta.env.VITE_DISABLE_VERCEL_API_PROXY || '').trim() === '1'
+  if (import.meta.env.VERCEL && !disable) return ''
+  const viteUrl = String(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+  if (viteUrl) return viteUrl
+  return getApiOrigin()
+}
+
+const API_BASE_URL = resolveApiClientBaseUrl()
 
 class ApiClient {
   constructor() {
