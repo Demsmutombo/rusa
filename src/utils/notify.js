@@ -80,6 +80,18 @@ const toast = {
       timerProgressBar: true,
     })
   },
+  /** @param {string} message */
+  info(message) {
+    return Swal.fire({
+      icon: 'info',
+      title: message,
+      toast: true,
+      position: 'top-end',
+      showConfirmButton: false,
+      timer: 3200,
+      timerProgressBar: true,
+    })
+  },
 }
 
 export const notify = {

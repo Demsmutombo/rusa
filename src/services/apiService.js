@@ -46,8 +46,14 @@ function createHttpError(status, message) {
   return err
 }
 
+/**
+ * @typedef {{ skipSocieteHeader?: boolean }} ApiRequestMeta
+ * Métadonnées optionnelles pour `apiRequest` / `apiGet` (3ᵉ argument).
+ */
+
 // Créer une instance fetch avec le token d'authentification
-export const apiRequest = async (url, options = {}) => {
+/** @param {string} url @param {RequestInit & { headers?: Record<string, string> }} [options] @param {ApiRequestMeta} [meta] */
+export const apiRequest = async (url, options = {}, meta = {}) => {
   const authStore = useAuthStore()
 
   const method = String(options.method || 'GET').toUpperCase()
@@ -67,9 +73,11 @@ export const apiRequest = async (url, options = {}) => {
     console.log('Token ajouté aux headers:', String(bearer).substring(0, 20) + '...')
   }
 
-  const sid = authStore.apiSocieteId
-  if (sid != null && Number(sid) > 0) {
-    headers['X-Societe-Id'] = String(sid)
+  if (!meta.skipSocieteHeader) {
+    const sid = authStore.apiSocieteId
+    if (sid != null && Number(sid) > 0) {
+      headers['X-Societe-Id'] = String(sid)
+    }
   }
 
   const config = {
@@ -134,8 +142,9 @@ export const apiRequest = async (url, options = {}) => {
 }
 
 // Méthodes HTTP pratiques
-export const apiGet = (url, options = {}) => {
-  return apiRequest(url, { method: 'GET', ...options })
+/** @param {string} url @param {RequestInit & { headers?: Record<string, string> }} [options] @param {ApiRequestMeta} [meta] */
+export const apiGet = (url, options = {}, meta = {}) => {
+  return apiRequest(url, { method: 'GET', ...options }, meta)
 }
 
 export const apiPost = (url, data, options = {}) => {

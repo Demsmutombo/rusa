@@ -21,9 +21,11 @@
           </button>
           <button
             type="button"
-            class="shrink-0 rounded-lg bg-white/15 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25"
+            class="shrink-0 rounded-lg bg-white/15 px-4 py-2.5 text-sm font-medium text-white backdrop-blur-sm transition hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="exporting || loading || !filteredReservations.length"
+            @click="exportReservationsPdf"
           >
-            Exporter les réservations
+            {{ exporting ? 'Export…' : 'Exporter les réservations' }}
           </button>
         </div>
       </div>
@@ -552,6 +554,8 @@ import {
   createReservation,
   buildReservationCreateBody,
 } from '@/services/reservationService'
+import { getSociete } from '@/services/societeService'
+import { exportReservationsToPdf } from '@/utils/exportReservationsPdf'
 
 const headerIntro = useAdminModuleGreeting('bienvenue — réservations ci-dessous.')
 
@@ -563,6 +567,7 @@ const showDetailModal = ref(false)
 const detailReservation = ref(null)
 const createRefsLoading = ref(false)
 const createSaving = ref(false)
+const exporting = ref(false)
 const clientChoices = ref([])
 const voyageChoices = ref([])
 
@@ -847,6 +852,47 @@ const STATUS_LABELS = {
 
 function statusLabel(status) {
   return STATUS_LABELS[status] || status
+}
+
+function reservationExportFilterSummary() {
+  const parts = []
+  const q = searchQuery.value.trim()
+  if (q) parts.push(`recherche « ${q} »`)
+  if (statusFilter.value) parts.push(`statut : ${statusLabel(statusFilter.value)}`)
+  if (dateFilter.value) parts.push(`date voyage : ${dateFilter.value}`)
+  return parts.length ? parts.join(' ; ') : ''
+}
+
+async function exportReservationsPdf() {
+  const rows = filteredReservations.value
+  if (!rows.length) {
+    await notify.warning('Export', 'Aucune réservation à exporter avec les filtres actuels.')
+    return
+  }
+  exporting.value = true
+  try {
+    const sid = idSocieteForSave.value
+    let societe = null
+    if (sid != null && Number(sid) > 0) {
+      try {
+        societe = await getSociete(sid)
+      } catch {
+        societe = null
+      }
+    }
+    await exportReservationsToPdf({
+      reservations: rows,
+      societe,
+      filterSummary: reservationExportFilterSummary(),
+      formatMoneyFc,
+      statusLabel,
+    })
+    notify.toast.success('Export PDF enregistré')
+  } catch (e) {
+    await notify.error('Export impossible', e?.message || 'Erreur inconnue')
+  } finally {
+    exporting.value = false
+  }
 }
 
 const resetFilters = () => {
