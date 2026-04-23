@@ -193,7 +193,7 @@
                     class="transition disabled:opacity-50"
                     @click="toggleAgentStatutRow(a)"
                   >
-                    {{ a.statut ? 'Désactiver' : 'Réactiver' }}
+                    {{ a.statut ? 'Supprimer' : 'Réactiver' }}
                   </button>
                 </td>
                 </tr>
@@ -985,7 +985,7 @@ async function save() {
 }
 
 async function toggleAgentStatutRow(a) {
-  const verb = a.statut ? 'désactiver' : 'réactiver'
+  const verb = a.statut ? 'supprimer' : 'réactiver'
   const ok = await notify.confirm(
     `Voulez-vous ${verb} l’agent « ${a.nomComplet} » ?`,
     `Confirmer : ${verb}`

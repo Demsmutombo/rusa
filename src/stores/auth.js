@@ -12,6 +12,11 @@ import {
 } from '@/config/roles'
 import { useRoleCatalogStore } from '@/stores/roleCatalog'
 import { idAgentFromToken, sessionHintsFromJwt } from '@/utils/jwtClaims'
+import {
+  LS_AUTH_PERMISSIONS,
+  LS_AUTH_PERMISSIONS_BY_ROLE,
+  LS_LEGACY_PERMISSIONS,
+} from '@/config/authStorageKeys'
 
 export { normalizeAppRole, resolveAppRoleSlug } from '@/config/roles'
 
@@ -100,6 +105,40 @@ function normalizePermissionsList(raw) {
     }
   }
   return out
+}
+
+/**
+ * Persiste la liste de permissions (session + clés `rusa_*` + entrée par `idRole` pour comparaisons multi-rôles).
+ * @param {unknown} perms
+ * @param {{ idRole?: number | string | null, roleSlug?: string | null }} [opts]
+ */
+function writePermissionsLocal(perms, opts = {}) {
+  const list = normalizePermissionsList(perms)
+  const { idRole = null, roleSlug = '' } = opts
+  try {
+    localStorage.setItem(LS_LEGACY_PERMISSIONS, JSON.stringify(list))
+    localStorage.setItem(LS_AUTH_PERMISSIONS, JSON.stringify(list))
+  } catch {
+    /* ignore */
+  }
+  const n = idRole != null && idRole !== '' ? Number(idRole) : NaN
+  if (!Number.isFinite(n) || n <= 0) return
+  try {
+    let map = {}
+    const raw = localStorage.getItem(LS_AUTH_PERMISSIONS_BY_ROLE)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed && typeof parsed === 'object') map = parsed
+    }
+    map[String(n)] = {
+      roleSlug: String(roleSlug || ''),
+      permissions: list,
+      updatedAt: new Date().toISOString(),
+    }
+    localStorage.setItem(LS_AUTH_PERMISSIONS_BY_ROLE, JSON.stringify(map))
+  } catch {
+    /* ignore */
+  }
 }
 
 function applyRoleFromUserPayload(userPayload) {
@@ -355,7 +394,10 @@ export const useAuthStore = defineStore('auth', () => {
 
       const perms = normalizePermissionsList(data.permissions)
       permissions.value = perms
-      localStorage.setItem('permissions', JSON.stringify(perms))
+      writePermissionsLocal(perms, {
+        idRole: idRoleResolved,
+        roleSlug: role.value,
+      })
 
       const roleCatalog = useRoleCatalogStore()
       await roleCatalog.syncFromApi(data.accessToken)
@@ -427,7 +469,7 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.setItem('accessToken', authData.accessToken)
     localStorage.setItem('user', JSON.stringify(utilisateur))
     localStorage.setItem('role', r)
-    localStorage.setItem('permissions', JSON.stringify(perms))
+    writePermissionsLocal(perms, { idRole: idr, roleSlug: r })
   }
 
   /** Nettoyage local uniquement (token expiré, 401, etc.). */
@@ -448,7 +490,9 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('accessToken')
     localStorage.removeItem('user')
     localStorage.removeItem('role')
-    localStorage.removeItem('permissions')
+    localStorage.removeItem(LS_LEGACY_PERMISSIONS)
+    localStorage.removeItem(LS_AUTH_PERMISSIONS)
+    localStorage.removeItem(LS_AUTH_PERMISSIONS_BY_ROLE)
     localStorage.removeItem('client')
     localStorage.removeItem('agent')
     localStorage.removeItem('refreshToken')
@@ -499,10 +543,13 @@ export const useAuthStore = defineStore('auth', () => {
     return roleGrantsPermissionCode(role.value, key)
   }
 
-  /** Au moins une des permissions listées (codes normalisés depuis l’API). */
+  /**
+   * OR logique : au moins une clé satisfaite.
+   * Délègue à `hasPermission` (JWT + localStorage + matrice rôle ex. Super-Admin `*`).
+   */
   const hasAnyPermission = (keys) => {
     if (!Array.isArray(keys) || keys.length === 0) return true
-    return keys.some((k) => permissions.value.includes(k))
+    return keys.some((k) => hasPermission(k))
   }
 
   const hasRole = (requiredRole) => {
@@ -516,7 +563,9 @@ export const useAuthStore = defineStore('auth', () => {
     const storedToken = localStorage.getItem('accessToken')
     const storedUser = localStorage.getItem('user')
     const storedRole = localStorage.getItem('role')
-    const storedPermissions = localStorage.getItem('permissions')
+    const permRaw =
+      localStorage.getItem(LS_LEGACY_PERMISSIONS) ||
+      localStorage.getItem(LS_AUTH_PERMISSIONS)
     const storedClient = localStorage.getItem('client')
     const storedAgent = localStorage.getItem('agent')
 
@@ -597,9 +646,9 @@ export const useAuthStore = defineStore('auth', () => {
       localStorage.setItem('role', role.value)
     }
 
-    if (storedPermissions) {
+    if (permRaw) {
       try {
-        permissions.value = JSON.parse(storedPermissions)
+        permissions.value = JSON.parse(permRaw)
       } catch {
         permissions.value = []
       }
@@ -657,6 +706,17 @@ export const useAuthStore = defineStore('auth', () => {
         pickIdRoleFromUser(user.value),
         extractPrimaryRoleNom({ utilisateur: user.value })
       )
+    }
+
+    if (permissions.value.length) {
+      const idr =
+        sessionRoleId.value ??
+        (user.value ? pickIdRoleFromUser(user.value) : null) ??
+        (hints?.idRole != null ? Number(hints.idRole) : null)
+      writePermissionsLocal(permissions.value, {
+        idRole: idr,
+        roleSlug: role.value,
+      })
     }
 
     console.log('Auth initialisée:', { 

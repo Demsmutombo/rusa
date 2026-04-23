@@ -368,7 +368,8 @@ export function verifyNavigationAccess(to, ctx, catalogRoles = []) {
 export function canAccessPrivateRoute(to, auth, catalogRoles = []) {
   const permissions = to.meta.permissions
   if (Array.isArray(permissions) && permissions.length) {
-    if (!auth.hasAnyPermission(permissions)) return false
+    /** Rôle `admin` : respecter la liste `permissions` (API + localStorage). Autres rôles : chemins métier (`accessPolicy`) sans ce filtre. */
+    if (auth.role === 'admin' && !auth.hasAnyPermission(permissions)) return false
   }
 
   if (to.meta.adminModule) {

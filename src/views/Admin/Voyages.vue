@@ -164,7 +164,7 @@
                       class="transition disabled:opacity-50"
                       @click="toggleStatut(r)"
                     >
-                      {{ rowStatut(r) ? 'Désactiver' : 'Réactiver' }}
+                      {{ rowStatut(r) ? 'Supprimer' : 'Réactiver' }}
                     </button>
                   </td>
                 </tr>
@@ -244,7 +244,7 @@
                   "
                   @click="toggleStatut(r)"
                 >
-                  {{ rowStatut(r) ? 'Désactiver' : 'Réactiver' }}
+                  {{ rowStatut(r) ? 'Supprimer' : 'Réactiver' }}
                 </button>
               </div>
             </article>
@@ -335,14 +335,52 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-primary-200/90">Prix *</label>
+                <!-- Création : tarif issu de la destination, affichage large (pas de champ saisie). -->
+                <div
+                  v-if="!viewOnly && !editing"
+                  class="mt-2 flex min-h-[5.5rem] flex-col items-center justify-center rounded-xl border border-primary-200/80 bg-primary-50/60 py-6 dark:border-primary-700/50 dark:bg-primary-900/35"
+                >
+                  <p class="text-[11px] font-semibold uppercase tracking-widest text-primary-600/90 dark:text-primary-400/90">
+                    Tarif
+                  </p>
+                  <p
+                    class="mt-1 text-4xl font-bold tabular-nums tracking-tight text-primary-600 sm:text-5xl dark:text-primary-400"
+                  >
+                    {{ form.idDestination > 0 ? formatPrix(form.prix) : '—' }}
+                  </p>
+                  <p
+                    v-if="form.idDestination > 0"
+                    class="mt-2 max-w-sm text-center text-xs text-gray-600 dark:text-primary-300/75"
+                  >
+                    Montant repris de la destination sélectionnée.
+                  </p>
+                  <p v-else class="mt-2 text-center text-xs text-gray-500 dark:text-primary-400/70">
+                    Choisissez une destination pour afficher le tarif.
+                  </p>
+                </div>
+                <!-- Édition : saisie possible si le tarif diffère du catalogue. -->
                 <input
+                  v-else-if="!viewOnly && editing"
                   v-model.number="form.prix"
                   type="number"
                   min="0"
                   step="1"
-                  :readonly="viewOnly"
-                  :class="inputClass(viewOnly)"
+                  :class="inputClass(false)"
                 />
+                <!-- Consultation -->
+                <div
+                  v-else
+                  class="mt-2 flex min-h-[4.5rem] flex-col items-center justify-center rounded-xl border border-primary-200/80 bg-primary-50/60 py-5 dark:border-primary-700/50 dark:bg-primary-900/35"
+                >
+                  <p class="text-[11px] font-semibold uppercase tracking-widest text-primary-600/90 dark:text-primary-400/90">
+                    Tarif
+                  </p>
+                  <p
+                    class="mt-1 text-3xl font-bold tabular-nums tracking-tight text-primary-600 sm:text-4xl dark:text-primary-400"
+                  >
+                    {{ formatPrix(form.prix) }}
+                  </p>
+                </div>
               </div>
               <div v-if="viewOnly" class="flex items-center gap-2">
                 <span class="text-sm font-medium text-gray-700 dark:text-primary-200/90">Statut</span>
@@ -398,7 +436,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
 import AdminListToolbar from '@/components/admin/AdminListToolbar.vue'
@@ -547,6 +585,30 @@ function destLabel(d) {
   const b = d.villeArrivee ?? d.VilleArrivee ?? ''
   return `${a} → ${b}`.trim() || `Destination #${destId(d)}`
 }
+
+/** Tarif catalogue destination (API : surtout `montant`, parfois `prix`). */
+function pickDestinationTarif(d) {
+  if (!d || typeof d !== 'object') return null
+  const raw = d.montant ?? d.Montant ?? d.prix ?? d.Prix
+  const n = Number(raw)
+  if (!Number.isFinite(n) || n < 0) return null
+  return n
+}
+
+watch(
+  () => form.value.idDestination,
+  (id) => {
+    if (viewOnly.value || editing.value) return
+    const idNum = Number(id)
+    if (!Number.isFinite(idNum) || idNum <= 0) {
+      form.value.prix = 0
+      return
+    }
+    const d = destinations.value.find((x) => Number(destId(x)) === idNum)
+    const t = pickDestinationTarif(d)
+    form.value.prix = t != null ? t : 0
+  }
+)
 
 function trajetLabel(r) {
   if (!r) return '—'
@@ -773,7 +835,7 @@ async function toggleStatut(r) {
   const id = voyageId(r)
   const label = `${formatDateDepartCell(r.dateDepart ?? r.DateDepart)} ${ticksToHHmm(r.heureDepart ?? r.HeureDepart)}`
   const wasActive = rowStatut(r)
-  const verb = wasActive ? 'désactiver' : 'réactiver'
+  const verb = wasActive ? 'supprimer' : 'réactiver'
   const ok = await notify.confirm(`Voulez-vous ${verb} le voyage du ${label} ?`, 'Confirmation')
   if (!ok) return
   const sid = Number(r.idSociete ?? r.IdSociete)

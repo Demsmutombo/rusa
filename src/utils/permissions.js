@@ -1,5 +1,10 @@
 // Helper global pour vérifier les permissions
 import { useAuthStore } from '@/stores/auth'
+import {
+  LS_AUTH_PERMISSIONS,
+  LS_AUTH_PERMISSIONS_BY_ROLE,
+  LS_LEGACY_PERMISSIONS,
+} from '@/config/authStorageKeys'
 
 // Fonction globale pour vérifier si l'utilisateur a une permission spécifique
 export const hasPermission = (permission) => {
@@ -35,4 +40,48 @@ export const getCurrentRole = () => {
 export const getCurrentPermissions = () => {
   const authStore = useAuthStore()
   return authStore.permissions
+}
+
+/**
+ * Liste persistée (session courante), lue depuis le stockage local.
+ * @returns {string[]}
+ */
+export function getStoredPermissionsList() {
+  try {
+    const raw =
+      localStorage.getItem(LS_AUTH_PERMISSIONS) ||
+      localStorage.getItem(LS_LEGACY_PERMISSIONS)
+    if (!raw) return []
+    const p = JSON.parse(raw)
+    if (!Array.isArray(p)) return []
+    return p.map((x) => String(x))
+  } catch {
+    return []
+  }
+}
+
+/**
+ * Dernières permissions enregistrées par `idRole` (chaque connexion met à jour l’entrée du rôle courant).
+ * @returns {Record<string, { roleSlug: string, permissions: string[], updatedAt: string }>}
+ */
+export function getStoredPermissionsByRole() {
+  try {
+    const raw = localStorage.getItem(LS_AUTH_PERMISSIONS_BY_ROLE)
+    if (!raw) return {}
+    const o = JSON.parse(raw)
+    return o && typeof o === 'object' ? o : {}
+  } catch {
+    return {}
+  }
+}
+
+/**
+ * @param {number | string} idRole
+ * @returns {{ roleSlug: string, permissions: string[], updatedAt: string } | null}
+ */
+export function getStoredPermissionsForRole(idRole) {
+  const key = String(idRole)
+  const map = getStoredPermissionsByRole()
+  const e = map[key]
+  return e && typeof e === 'object' ? e : null
 }

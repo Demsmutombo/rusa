@@ -66,11 +66,6 @@
                 <th
                   class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70"
                 >
-                  Photo
-                </th>
-                <th
-                  class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-primary-300/70"
-                >
                   N° bus
                 </th>
                 <th
@@ -102,17 +97,17 @@
             </thead>
             <tbody class="divide-y divide-gray-200 dark:divide-primary-800/50">
               <tr v-if="loading">
-                <td colspan="7" class="px-6 py-10 text-center text-gray-500 dark:text-primary-400/80">
+                <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-primary-400/80">
                   Chargement…
                 </td>
               </tr>
               <tr v-else-if="!rows.length">
-                <td colspan="7" class="px-6 py-10 text-center text-gray-500 dark:text-primary-400/80">
+                <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-primary-400/80">
                   Aucun bus pour le moment.
                 </td>
               </tr>
               <tr v-else-if="!filteredRows.length">
-                <td colspan="7" class="px-6 py-10 text-center text-gray-500 dark:text-primary-400/80">
+                <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-primary-400/80">
                   Aucun bus ne correspond à la recherche ou au filtre de statut.
                 </td>
               </tr>
@@ -122,22 +117,6 @@
                   :key="r.idBus ?? r.IdBus"
                   class="transition-colors hover:bg-gray-50/80 dark:hover:bg-primary-900/35"
                 >
-                  <td class="px-4 py-4 align-middle">
-                    <div
-                      v-if="!busPhotoSrc(r) || photoBroken[busPhotoBrokenKey(r)]"
-                      class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-100 text-xs font-semibold text-gray-600 dark:border-primary-700 dark:bg-primary-900/60 dark:text-primary-200"
-                    >
-                      {{ (r.marques ?? r.Marques ?? '?').slice(0, 2).toUpperCase() }}
-                    </div>
-                    <img
-                      v-else
-                      :src="busPhotoSrc(r)"
-                      alt=""
-                      class="h-11 w-11 shrink-0 rounded-full border border-primary-800/30 object-cover dark:border-primary-700/50"
-                      loading="lazy"
-                      @error="onPhotoError(busPhotoBrokenKey(r))"
-                    />
-                  </td>
                   <td class="whitespace-nowrap px-4 py-4 align-middle tabular-nums text-gray-800 dark:text-gray-200">
                     {{ r.numeroBus ?? r.NumeroBus ?? '—' }}
                   </td>
@@ -193,7 +172,7 @@
                       class="transition disabled:opacity-50"
                       @click="toggleStatut(r)"
                     >
-                      {{ rowStatut(r) ? 'Désactiver' : 'Réactiver' }}
+                      {{ rowStatut(r) ? 'Supprimer' : 'Réactiver' }}
                     </button>
                   </td>
                 </tr>
@@ -216,34 +195,6 @@
               {{ viewOnly ? 'Détails du bus' : editing ? 'Modifier le bus' : 'Nouveau bus' }}
             </h3>
             <div class="space-y-3">
-              <template v-if="viewOnly && viewContext">
-                <div class="flex flex-col items-center gap-3">
-                  <div
-                    v-if="busPhotoSrc(viewContext) && !photoBroken[busPhotoBrokenKey(viewContext)]"
-                    class="shrink-0 overflow-hidden rounded-full border-2 border-gray-200 shadow-sm dark:border-primary-600"
-                  >
-                    <img
-                      :src="busPhotoSrc(viewContext)"
-                      alt=""
-                      class="size-40 object-cover object-center"
-                      loading="lazy"
-                      @error="onPhotoError(busPhotoBrokenKey(viewContext))"
-                    />
-                  </div>
-                  <div
-                    v-else-if="busPhotoSrc(viewContext) && photoBroken[busPhotoBrokenKey(viewContext)]"
-                    class="flex size-40 shrink-0 items-center justify-center rounded-full border-2 border-amber-300 bg-amber-50 text-center text-xs text-amber-900 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-200"
-                  >
-                    Aperçu indisponible
-                  </div>
-                  <div
-                    v-else
-                    class="flex size-40 shrink-0 items-center justify-center rounded-full border-2 border-gray-200 bg-gray-100 text-lg font-bold text-gray-600 dark:border-primary-600 dark:bg-primary-900/60 dark:text-primary-200"
-                  >
-                    {{ (viewContext.marques ?? viewContext.Marques ?? '?').slice(0, 2).toUpperCase() }}
-                  </div>
-                </div>
-              </template>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-primary-200/90">Marque *</label>
                 <input
@@ -324,60 +275,6 @@
                   ]"
                 />
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-primary-200/90">Photo</label>
-                <p v-if="!viewOnly" class="mt-0.5 text-xs text-gray-500 dark:text-primary-400/75">
-                  Collez une URL / chemin, ou importez une image (fichier converti pour l’envoi au serveur).
-                </p>
-                <div v-if="!viewOnly" class="mt-2 flex flex-wrap items-center gap-2">
-                  <input
-                    ref="busPhotoFileRef"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    class="sr-only"
-                    tabindex="-1"
-                    @change="onBusPhotoFile"
-                  />
-                  <button
-                    type="button"
-                    class="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-800 shadow-sm hover:bg-gray-50 dark:border-primary-600 dark:bg-primary-900/60 dark:text-primary-100 dark:hover:bg-primary-800/60"
-                    @click="busPhotoFileRef?.click()"
-                  >
-                    Importer une image…
-                  </button>
-                </div>
-                <label class="mt-2 block text-xs font-medium text-gray-600 dark:text-primary-300/80">URL ou chemin (optionnel)</label>
-                <input
-                  v-model="form.photo"
-                  type="text"
-                  placeholder="https://… ou /chemin/vers/image.jpg"
-                  :readonly="viewOnly"
-                  :class="[
-                    'mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 dark:border-primary-700 dark:bg-primary-900/80 dark:text-gray-100',
-                    viewOnly ? 'cursor-default bg-gray-50 dark:bg-primary-900/50' : 'bg-white',
-                  ]"
-                />
-                <div
-                  v-if="formPhotoDisplayUrl && !formPhotoPreviewBroken"
-                  class="mt-3 flex justify-center"
-                >
-                  <div
-                    class="overflow-hidden rounded-full border-2 border-gray-200 bg-gray-50 shadow-sm dark:border-primary-600 dark:bg-primary-900/40"
-                    :class="viewOnly ? 'size-36' : 'size-40'"
-                  >
-                    <img
-                      :src="formPhotoDisplayUrl"
-                      alt="Aperçu de la photo"
-                      class="size-full object-cover object-center"
-                      loading="lazy"
-                      @error="formPhotoPreviewBroken = true"
-                    />
-                  </div>
-                </div>
-                <p v-else-if="String(form.photo || '').trim() && formPhotoPreviewBroken" class="mt-2 text-xs text-amber-700 dark:text-amber-400/90">
-                  Impossible de charger cette image (URL ou chemin invalide).
-                </p>
-              </div>
               <div v-if="viewOnly" class="flex items-center gap-2">
                 <span class="text-sm font-medium text-gray-700 dark:text-primary-200/90">Statut</span>
                 <span
@@ -432,7 +329,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
 import { useAdminListSearch } from '@/composables/useAdminListSearch'
 import { useTenantSocieteId } from '@/composables/useTenantSocieteId'
@@ -441,8 +338,6 @@ import {
   createBus,
   updateBus,
   toggleBusStatut,
-  resolveBusPhotoUrl,
-  resolveBusPhotoFromRow,
   pickBusPhotoRaw,
 } from '@/services/busService'
 import { listTypeBusArray } from '@/services/typeBusService'
@@ -462,9 +357,6 @@ const viewOnly = ref(false)
 const viewContext = ref(null)
 const saving = ref(false)
 const togglingId = ref(null)
-const photoBroken = ref({})
-const formPhotoPreviewBroken = ref(false)
-const busPhotoFileRef = ref(null)
 
 const form = ref({
   idBus: 0,
@@ -479,17 +371,6 @@ const form = ref({
 })
 
 const typeOptions = computed(() => types.value.filter((t) => rowStatut(t)))
-
-const formPhotoDisplayUrl = computed(() =>
-  resolveBusPhotoUrl(String(form.value.photo || '').trim())
-)
-
-watch(
-  () => form.value.photo,
-  () => {
-    formPhotoPreviewBroken.value = false
-  }
-)
 
 function rowStatut(r) {
   const v = r.statut ?? r.Statut
@@ -553,23 +434,6 @@ const { searchQuery, statutFilter, filteredRows, hasActiveFilters, clearFilters 
   }
 )
 
-function busPhotoBrokenKey(r) {
-  if (!r) return ''
-  const id = r.idBus ?? r.IdBus
-  const n = Number(id)
-  return Number.isFinite(n) && n > 0 ? n : String(id ?? '')
-}
-
-function busPhotoSrc(r) {
-  return resolveBusPhotoFromRow(r)
-}
-
-function onPhotoError(key) {
-  const k = typeof key === 'number' && Number.isFinite(key) ? key : String(key ?? '')
-  if (k === '' || k === 'NaN') return
-  photoBroken.value = { ...photoBroken.value, [k]: true }
-}
-
 /** Numéro bus interne pour l’API (plus affiché dans le formulaire). */
 function pickNextNumeroBus() {
   let max = 0
@@ -578,35 +442,6 @@ function pickNextNumeroBus() {
     if (Number.isFinite(n) && n > max) max = n
   }
   return max + 1
-}
-
-async function onBusPhotoFile(ev) {
-  const input = ev.target
-  if (!(input instanceof HTMLInputElement)) return
-  const file = input.files?.[0]
-  input.value = ''
-  if (!file) return
-  if (!file.type.startsWith('image/')) {
-    await notify.warning('Fichier', 'Choisissez une image (JPEG, PNG, WebP ou GIF).')
-    return
-  }
-  const maxBytes = 2 * 1024 * 1024
-  if (file.size > maxBytes) {
-    await notify.warning('Fichier trop volumineux', 'Limite : 2 Mo par image.')
-    return
-  }
-  const reader = new FileReader()
-  reader.onload = () => {
-    const data = String(reader.result || '')
-    if (data) {
-      form.value.photo = data
-      formPhotoPreviewBroken.value = false
-    }
-  }
-  reader.onerror = async () => {
-    await notify.error('Lecture fichier', 'Impossible de lire le fichier.')
-  }
-  reader.readAsDataURL(file)
 }
 
 async function loadTypes() {
@@ -620,7 +455,6 @@ async function loadTypes() {
 async function load() {
   loading.value = true
   error.value = ''
-  photoBroken.value = {}
   try {
     await loadTypes()
     rows.value = await listBusArray()
@@ -647,7 +481,6 @@ function openView(r) {
     photo: pickBusPhotoRaw(r),
     statut: rowStatut(r),
   }
-  formPhotoPreviewBroken.value = false
   showModal.value = true
 }
 
@@ -655,7 +488,6 @@ function openCreate() {
   viewOnly.value = false
   viewContext.value = null
   editing.value = false
-  formPhotoPreviewBroken.value = false
   form.value = {
     idBus: 0,
     marques: '',
@@ -685,7 +517,6 @@ function openEdit(r) {
     photo: pickBusPhotoRaw(r),
     statut: rowStatut(r),
   }
-  formPhotoPreviewBroken.value = false
   showModal.value = true
 }
 
@@ -693,7 +524,6 @@ function closeModal() {
   showModal.value = false
   viewOnly.value = false
   viewContext.value = null
-  formPhotoPreviewBroken.value = false
 }
 
 async function save() {
@@ -760,7 +590,7 @@ async function toggleStatut(r) {
   const id = r.idBus ?? r.IdBus
   const label = `${r.marques ?? r.Marques ?? 'Bus'} (${r.numeroDePlaque ?? r.NumeroDePlaque ?? id})`
   const wasActive = rowStatut(r)
-  const verb = wasActive ? 'désactiver' : 'réactiver'
+  const verb = wasActive ? 'supprimer' : 'réactiver'
   const ok = await notify.confirm(`Voulez-vous ${verb} « ${label} » ?`, 'Confirmation')
   if (!ok) return
   togglingId.value = id

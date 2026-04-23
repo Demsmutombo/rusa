@@ -71,6 +71,7 @@ import {
   CalendarDaysIcon,
 } from '@heroicons/vue/24/outline'
 import { useAuthStore } from '@/stores/auth'
+import { PERM } from '@/config/adminModulePermissions'
 import { listAgentsArray } from '@/services/agentService'
 import { listDestinationsArray } from '@/services/destinationService'
 import { listTypeBusArray } from '@/services/typeBusService'
@@ -150,13 +151,37 @@ function hintReservations(c, ready) {
   return `${n} réservations enregistrées`
 }
 
-const quickLinks = computed(() => [
-  { to: '/admin/agents', label: 'Agents', hint: hintAgents, icon: UserCircleIcon },
-  { to: '/admin/destinations', label: 'Destinations', hint: hintDestinations, icon: MapPinIcon },
-  { to: '/admin/bus-types', label: 'Types de bus', hint: hintBusTypes, icon: QueueListIcon },
-  { to: '/admin/buses', label: 'Bus', hint: hintBuses, icon: TruckIcon },
-  { to: '/admin/reservations', label: 'Réservations', hint: hintReservations, icon: CalendarDaysIcon },
-])
+const quickLinksAll = [
+  { to: '/admin/agents', label: 'Agents', hint: hintAgents, icon: UserCircleIcon, keys: PERM.agents },
+  {
+    to: '/admin/destinations',
+    label: 'Destinations',
+    hint: hintDestinations,
+    icon: MapPinIcon,
+    keys: PERM.destinations,
+  },
+  {
+    to: '/admin/bus-types',
+    label: 'Types de bus',
+    hint: hintBusTypes,
+    icon: QueueListIcon,
+    keys: PERM.busTypes,
+  },
+  { to: '/admin/buses', label: 'Bus', hint: hintBuses, icon: TruckIcon, keys: PERM.buses },
+  {
+    to: '/admin/reservations',
+    label: 'Réservations',
+    hint: hintReservations,
+    icon: CalendarDaysIcon,
+    keys: PERM.reservations,
+  },
+]
+
+const quickLinks = computed(() => {
+  return quickLinksAll
+    .filter((item) => authStore.hasAnyPermission(item.keys))
+    .map(({ keys: _keys, ...rest }) => rest)
+})
 
 onMounted(async () => {
   try {

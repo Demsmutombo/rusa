@@ -1,6 +1,7 @@
 // Service d'authentification — POST /api/Utilisateur/authentifier
 
 import { resolveApiUrl } from '@/config/apiOrigin'
+import { messageIfHtmlInsteadOfJson } from '@/utils/nonApiResponseMessage'
 
 async function readJsonBody(response) {
   const text = await response.text()
@@ -8,6 +9,8 @@ async function readJsonBody(response) {
   try {
     return JSON.parse(text)
   } catch {
+    const htmlMsg = messageIfHtmlInsteadOfJson(text)
+    if (htmlMsg) throw new Error(htmlMsg)
     const hint = text.trim().slice(0, 240)
     throw new Error(hint || `Réponse non JSON (HTTP ${response.status})`)
   }

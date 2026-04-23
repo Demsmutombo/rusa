@@ -154,7 +154,7 @@
                     @click="deleteUser(user)"
                     class="text-red-600 hover:text-red-900"
                   >
-                    Désactiver
+                    Supprimer
                   </button>
                 </td>
               </tr>
@@ -463,7 +463,7 @@ const activateUser = suspendUser
 
 const deleteUser = async (user) => {
   const ok = await notify.confirm(
-    'Désactiver « ' +
+    'Supprimer « ' +
       user.name +
       ' » ? Le compte passera en inactif (aucune suppression en base).',
     'Confirmation'

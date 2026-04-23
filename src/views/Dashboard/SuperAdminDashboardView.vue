@@ -807,8 +807,13 @@ async function load() {
       dashboard.value = dashResult.value
     } else {
       dashboard.value = null
-      dashboardLoadError.value =
-        dashResult.reason?.message || 'Impossible de charger le tableau de bord.'
+      const err = dashResult.reason
+      const st = err && typeof err === 'object' ? err.status : undefined
+      // 404 = route backend non déployée : on affiche quand même les sociétés (GET /api/Societe) sans bannière d’erreur.
+      if (st !== 404) {
+        dashboardLoadError.value =
+          err?.message || 'Impossible de charger le tableau de bord.'
+      }
     }
     if (apiResult.status === 'fulfilled') {
       societesApiRaw.value = apiResult.value

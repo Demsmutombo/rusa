@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useRoleCatalogStore } from '@/stores/roleCatalog'
 import { getDashboardPath, verifyNavigationAccess } from '@/config/roles'
+import { PERM } from '@/config/adminModulePermissions'
 
 const roleDashboard = () => import('../views/Dashboard/RoleDashboard.vue')
 
@@ -121,6 +122,16 @@ const router = createRouter({
       },
     },
     {
+      path: '/super-admin/clients',
+      name: 'SuperAdminClients',
+      component: () => import('../views/Admin/Clients.vue'),
+      meta: {
+        title: 'Clients - Super-Admin - Rusa Travel',
+        requiresAuth: true,
+        roles: ['superadmin'],
+      },
+    },
+    {
       path: '/admin',
       name: 'AdminDashboard',
       component: roleDashboard,
@@ -188,6 +199,7 @@ const router = createRouter({
         title: 'Gestion des Utilisateurs - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.utilisateurs,
       },
     },
     {
@@ -198,6 +210,7 @@ const router = createRouter({
         title: 'Sociétés (agences) - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.societes,
       },
     },
     {
@@ -208,6 +221,7 @@ const router = createRouter({
         title: 'Agents - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.agents,
       },
     },
     {
@@ -218,6 +232,7 @@ const router = createRouter({
         title: 'Destinations - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.destinations,
       },
     },
     {
@@ -228,6 +243,7 @@ const router = createRouter({
         title: 'Bus - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.buses,
       },
     },
     {
@@ -238,6 +254,7 @@ const router = createRouter({
         title: 'Types de bus - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.busTypes,
       },
     },
     {
@@ -248,6 +265,7 @@ const router = createRouter({
         title: 'Voyages - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.voyages,
       },
     },
     {
@@ -258,6 +276,7 @@ const router = createRouter({
         title: 'Gestion des Transporteurs - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.transporteurs,
       },
     },
     {
@@ -268,6 +287,7 @@ const router = createRouter({
         title: 'Gestion des Trajets - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.trips,
       },
     },
     {
@@ -278,6 +298,7 @@ const router = createRouter({
         title: 'Gestion des Réservations - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.reservations,
       },
     },
     {
@@ -288,6 +309,18 @@ const router = createRouter({
         title: 'Billets - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.billets,
+      },
+    },
+    {
+      path: '/admin/clients',
+      name: 'AdminClients',
+      component: () => import('../views/Admin/Clients.vue'),
+      meta: {
+        title: 'Clients - Rusa Travel',
+        requiresAuth: true,
+        adminModule: true,
+        permissions: PERM.clients,
       },
     },
     {
@@ -298,6 +331,7 @@ const router = createRouter({
         title: 'Gestion des Paiements - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.paiements,
       },
     },
     {
@@ -308,6 +342,7 @@ const router = createRouter({
         title: 'Notifications - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.notifications,
       },
     },
     {
@@ -318,6 +353,7 @@ const router = createRouter({
         title: 'Paramètres Admin - Rusa Travel',
         requiresAuth: true,
         adminModule: true,
+        permissions: PERM.settings,
       },
     },
     {

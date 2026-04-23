@@ -9,9 +9,11 @@ import {
   userHasAdminModuleAccess,
   roleHasModule,
 } from '@/config/roles'
+import { PERM } from '@/config/adminModulePermissions'
 import {
   LayoutDashboardIcon,
   UserCircleIcon,
+  UserGroupIcon,
   PageIcon,
   BoxIcon,
   ListIcon,
@@ -38,6 +40,7 @@ export const SIDEBAR_SUPERADMIN_SOCIETES_NAV = true
 export const SIDEBAR_ADMIN_ENABLED_KEYS = [
   'dashboard',
   'agents',
+  'clients',
   'destinations',
   'buses',
   'bus-types',
@@ -122,7 +125,8 @@ export function filterMenuGroupsByWhitelist(groups, role) {
  * @param {SidebarMenuContext} ctx
  */
 function passesItemGate(item, ctx) {
-  if (item.requiredPermissions?.length) {
+  /** Rôle `admin` : masquer les entrées dont la liste API (JWT) ne contient aucune des clés requises. */
+  if (item.requiredPermissions?.length && ctx.role === 'admin') {
     const ok = item.requiredPermissions.some((k) => ctx.hasPermission(k))
     if (!ok) return false
   }
@@ -180,10 +184,18 @@ function makeBusNavItem(opts) {
 
   const subItems = []
   if (hasTypes) {
-    subItems.push({ name: 'Types de bus', path: typesPath })
+    subItems.push({
+      name: 'Types de bus',
+      path: typesPath,
+      requiredPermissions: PERM.busTypes,
+    })
   }
   if (hasBuses) {
-    subItems.push({ name: 'Bus', path: busesPath })
+    subItems.push({
+      name: 'Bus',
+      path: busesPath,
+      requiredPermissions: PERM.buses,
+    })
   }
 
   if (subItems.length === 1) {
@@ -194,6 +206,7 @@ function makeBusNavItem(opts) {
       icon: isTypes ? ListIcon : BoxIcon,
       name: only.name,
       path: only.path,
+      requiredPermissions: only.requiredPermissions,
       ...extra,
     }
   }
@@ -212,6 +225,7 @@ function buildSuperAdminMinimal(ctx) {
   const all = [
     { key: 'dashboard', icon: LayoutDashboardIcon, name: ctx.t('dashboard'), path: '/super-admin' },
     { key: 'agents', icon: UserCircleIcon, name: 'Agents', path: '/admin/agents' },
+    { key: 'clients', icon: UserGroupIcon, name: 'Clients', path: '/super-admin/clients' },
     { key: 'destinations', icon: PageIcon, name: 'Destinations', path: '/super-admin/destinations' },
   ]
   const enabled = new Set(SIDEBAR_ADMIN_ENABLED_KEYS)
@@ -264,12 +278,21 @@ function buildAdminModuleMenu(ctx) {
       icon: UserCircleIcon,
       name: 'Agents',
       path: '/admin/agents',
+      requiredPermissions: PERM.agents,
+    },
+    {
+      key: 'clients',
+      icon: UserGroupIcon,
+      name: 'Clients',
+      path: isSa ? '/super-admin/clients' : '/admin/clients',
+      requiredPermissions: PERM.clients,
     },
     {
       key: 'destinations',
       icon: PageIcon,
       name: 'Destinations',
       path: isSa ? `${basePath}/destinations` : '/admin/destinations',
+      requiredPermissions: PERM.destinations,
     },
   ]
 
@@ -282,6 +305,7 @@ function buildAdminModuleMenu(ctx) {
     icon: Calendar2Line,
     name: 'Voyages',
     path: isSa ? `${basePath}/voyages` : '/admin/voyages',
+    requiredPermissions: PERM.voyages,
   })
 
   candidates.push({
@@ -289,6 +313,7 @@ function buildAdminModuleMenu(ctx) {
     icon: ListIcon,
     name: 'Réservations',
     path: '/admin/reservations',
+    requiredPermissions: PERM.reservations,
   })
 
   candidates.push({
@@ -296,6 +321,7 @@ function buildAdminModuleMenu(ctx) {
     icon: DocsIcon,
     name: 'Billets',
     path: '/admin/billets',
+    requiredPermissions: PERM.billets,
   })
 
   const items = candidates
@@ -318,6 +344,7 @@ function buildGerantMenu(ctx) {
       name: 'Trajets',
       path: '/admin/trips',
       requiredModule: 'operations',
+      requiredPermissions: PERM.trips,
     },
     {
       key: 'voyages',
@@ -325,6 +352,7 @@ function buildGerantMenu(ctx) {
       name: 'Voyages',
       path: '/admin/voyages',
       requiredModule: 'operations',
+      requiredPermissions: PERM.voyages,
     },
     {
       key: 'reservations',
@@ -332,6 +360,7 @@ function buildGerantMenu(ctx) {
       name: 'Réservations',
       path: '/admin/reservations',
       requiredModule: 'operations',
+      requiredPermissions: PERM.reservations,
     },
     {
       key: 'billets',
@@ -339,6 +368,7 @@ function buildGerantMenu(ctx) {
       name: 'Billets',
       path: '/admin/billets',
       requiredModule: 'operations',
+      requiredPermissions: PERM.billets,
     },
     {
       key: 'agents',
@@ -346,6 +376,7 @@ function buildGerantMenu(ctx) {
       name: 'Agents',
       path: '/admin/agents',
       requiredModule: 'operations',
+      requiredPermissions: PERM.agents,
     },
     {
       key: 'destinations',
@@ -353,6 +384,7 @@ function buildGerantMenu(ctx) {
       name: 'Destinations',
       path: '/admin/destinations',
       requiredModule: 'operations',
+      requiredPermissions: PERM.destinations,
     },
     {
       key: 'transporteurs',
@@ -360,6 +392,7 @@ function buildGerantMenu(ctx) {
       name: 'Transporteurs',
       path: '/admin/transporteurs',
       requiredModule: 'operations',
+      requiredPermissions: PERM.transporteurs,
     },
   ]
   const enabled = new Set(SIDEBAR_GERANT_ENABLED_KEYS)
@@ -390,7 +423,13 @@ function buildFinancierMenu(ctx) {
       title: 'Menu Financier',
       items: [
         { icon: LayoutDashboardIcon, name: 'Dashboard', path: '/financier' },
-        { icon: ErrorIcon, name: 'Paiements', path: '/admin/payments', requiredModule: 'payments' },
+        {
+          icon: ErrorIcon,
+          name: 'Paiements',
+          path: '/admin/payments',
+          requiredModule: 'payments',
+          requiredPermissions: PERM.paiements,
+        },
       ],
     },
   ]
@@ -403,7 +442,13 @@ function buildCaissierMenu(ctx) {
       title: 'Menu Caissier',
       items: [
         { icon: LayoutDashboardIcon, name: 'Dashboard', path: '/caissier' },
-        { icon: ErrorIcon, name: 'Paiements', path: '/admin/payments', requiredModule: 'payments' },
+        {
+          icon: ErrorIcon,
+          name: 'Paiements',
+          path: '/admin/payments',
+          requiredModule: 'payments',
+          requiredPermissions: PERM.paiements,
+        },
       ],
     },
   ]

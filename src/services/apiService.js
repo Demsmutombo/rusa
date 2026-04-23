@@ -2,8 +2,18 @@
 
 import { useAuthStore } from '@/stores/auth'
 import { resolveApiUrl } from '@/config/apiOrigin'
+import { messageIfHtmlInsteadOfJson } from '@/utils/nonApiResponseMessage'
 
-/** ASP.NET ProblemDetails + ModelState → message lisible */
+function pickStr(...candidates) {
+  for (const c of candidates) {
+    if (c == null) continue
+    const s = String(c).trim()
+    if (s) return s
+  }
+  return ''
+}
+
+/** ASP.NET ProblemDetails + ModelState → message lisible (`detail` avant `title` : le titre est souvent générique). */
 function formatApiErrorBody(errJson) {
   if (!errJson || typeof errJson !== 'object') return null
   const errs = errJson.errors || errJson.Errors
@@ -15,15 +25,17 @@ function formatApiErrorBody(errJson) {
     }
     if (parts.length) return parts.join(' · ')
   }
-   return (
-    errJson.message ||
-    errJson.Message ||
-    errJson.title ||
-    errJson.Title ||
-    errJson.detail ||
-    errJson.Detail ||
-    null
+  const core = pickStr(
+    errJson.detail,
+    errJson.Detail,
+    errJson.message,
+    errJson.Message,
+    errJson.title,
+    errJson.Title,
   )
+  const trace = pickStr(errJson.traceId, errJson.TraceId, errJson.instance, errJson.Instance)
+  if (core && trace) return `${core} (réf. ${trace})`
+  return core || null
 }
 
 /** Erreur HTTP avec code statut (ex. 409 Conflict) pour un traitement côté vues. */
@@ -79,9 +91,14 @@ export const apiRequest = async (url, options = {}) => {
       }
 
       let detail = `Erreur HTTP: ${response.status}`
+      let errJson = null
       try {
-        const errJson = await response.clone().json()
-        detail = formatApiErrorBody(errJson) || detail
+        errJson = await response.clone().json()
+        detail =
+          formatApiErrorBody(errJson) ||
+          (errJson && typeof errJson === 'object' && Object.keys(errJson).length
+            ? JSON.stringify(errJson).slice(0, 400)
+            : detail)
       } catch {
         try {
           const t = await response.text()
@@ -90,7 +107,11 @@ export const apiRequest = async (url, options = {}) => {
           /* ignore */
         }
       }
-      throw createHttpError(response.status, detail)
+      const httpErr = createHttpError(response.status, detail)
+      if (errJson && typeof errJson === 'object') {
+        httpErr.responseBody = errJson
+      }
+      throw httpErr
     }
 
     const text = await response.text()
@@ -99,6 +120,8 @@ export const apiRequest = async (url, options = {}) => {
       try {
         data = JSON.parse(text)
       } catch {
+        const htmlMsg = messageIfHtmlInsteadOfJson(text)
+        if (htmlMsg) throw new Error(htmlMsg)
         throw new Error('Réponse non JSON: ' + text.slice(0, 200))
       }
     }
