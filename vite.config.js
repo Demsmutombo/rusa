@@ -7,8 +7,11 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const proxyTarget = env.VITE_DEV_PROXY_TARGET || 'http://127.0.0.1:5000'
-  const secure = proxyTarget.startsWith('https:')
+  const proxyTarget = env.VITE_DEV_PROXY_TARGET || 'https://localhost:7110'
+  const useHttps = proxyTarget.startsWith('https:')
+  const isLocalHost = /localhost|127\.0\.0\.1/i.test(proxyTarget)
+  /** Certificats dev ASP.NET souvent auto-signés sur localhost. */
+  const secure = useHttps && !isLocalHost
 
   return {
     plugins: [vue(), vueJsx()],

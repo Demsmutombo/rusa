@@ -3,7 +3,7 @@
 # Subfolder deploy: set RewriteBase (e.g. /my-app/)
 #
 # If /api is NOT proxied on this host, requests to /api/* may receive index.html (SPA).
-# Fix: build with VITE_API_ORIGIN=https://your-real-api-host (see .env.production.example),
+# Fix: build with VITE_API_ORIGIN=https://api.rusatravel.cd (voir .env.production.example),
 # or configure Apache/nginx to proxy /api to your ASP.NET app.
 
 <IfModule mod_negotiation.c>

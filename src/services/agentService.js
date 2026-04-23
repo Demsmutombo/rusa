@@ -100,7 +100,7 @@ export async function resolveAgentForUser(idAgentHint, emailHint) {
 }
 
 /**
- * Noms `nom` exacts renvoyés par GET /api/Role (ex. dev-rusatravel).
+ * Noms `nom` exacts renvoyés par GET /api/Role (selon l’API déployée).
  * Les libellés UI (Administrateur, Manager Général…) sont convertis avant POST/PUT Agent.
  */
 const ROLE_AGENT_API_BY_SLUG = {

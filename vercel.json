@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://dev-rusatravel.asdc-rdc.org/api/:path*"
+      "destination": "https://api.rusatravel.cd/api/:path*"
     },
     {
       "source": "/(.*)",

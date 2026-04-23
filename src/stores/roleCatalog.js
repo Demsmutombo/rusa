@@ -53,7 +53,7 @@ export const useRoleCatalogStore = defineStore('roleCatalog', () => {
       lastError.value = e instanceof Error ? e : new Error(String(e))
       if (import.meta.env.DEV && roles.value.length === 0) {
         console.warn(
-          '[roleCatalog] GET /api/Role impossible — cache vide. Définissez VITE_DEV_PROXY_TARGET dans .env vers votre API (ex. https://dev-rusatravel.asdc-rdc.org) ou corrigez le backend local.',
+          '[roleCatalog] GET /api/Role impossible — cache vide. Définissez VITE_DEV_PROXY_TARGET dans .env vers votre API (ex. https://localhost:7110) ou corrigez le backend local.',
           lastError.value.message
         )
       }
