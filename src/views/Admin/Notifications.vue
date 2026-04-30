@@ -194,7 +194,7 @@
                   @click="deleteNotification(notification)"
                   class="text-red-600 hover:text-red-900 text-sm"
                 >
-                  Supprimer
+                  Désactivé
                 </button>
               </div>
             </div>

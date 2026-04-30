@@ -20,6 +20,24 @@ export default defineConfig(({ mode }) => {
         '@': fileURLToPath(new URL('./src', import.meta.url)),
       },
     },
+    build: {
+      // Les dépendances lourdes sont séparées pour réduire le chunk principal.
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return
+            if (id.includes('html2pdf.js')) return 'vendor-html2pdf'
+            if (id.includes('sweetalert2')) return 'vendor-sweetalert2'
+            if (id.includes('apexcharts') || id.includes('vue3-apexcharts')) return 'vendor-charts'
+            if (id.includes('@fullcalendar')) return 'vendor-calendar'
+            if (id.includes('vue') || id.includes('pinia') || id.includes('vue-router')) return 'vendor-vue'
+            return 'vendor-misc'
+          },
+        },
+      },
+      // Le projet embarque des modules d'export PDF très volumineux.
+      chunkSizeWarningLimit: 1100,
+    },
     server: {
       proxy: {
         '/api': {

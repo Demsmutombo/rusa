@@ -7,19 +7,18 @@
 
 import { useAuthStore } from '@/stores/auth'
 import { scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
+import { API_ENDPOINTS } from './Endpoint.service'
 import { apiGet, apiPost } from './apiService'
 import { ticksToHHmm } from './voyageService'
 
-const JSON_ACCEPT = {
-  headers: {
-    Accept: 'text/plain, application/json;q=0.9, */*;q=0.8',
-  },
-}
 
 export function unwrapBilletList(data) {
   if (data == null) return []
   if (Array.isArray(data)) return data
-  const arr = data.data ?? data.items ?? data.results ?? data.value ?? []
+  if (Array.isArray(data.data)) return data.data
+  const nested = data.data && typeof data.data === 'object' ? data.data : null
+  if (nested && Array.isArray(nested.data)) return nested.data
+  const arr = data.items ?? data.results ?? data.value ?? []
   return Array.isArray(arr) ? arr : []
 }
 
@@ -36,7 +35,17 @@ function formatDateOnly(value) {
  */
 export async function listBilletsArray() {
   const auth = useAuthStore()
-  const raw = await apiGet('/api/Billet', JSON_ACCEPT)
+  let raw
+  try {
+    raw = await apiGet(API_ENDPOINTS.BILLET.LIST)
+  } catch (e) {
+    const status = Number(e?.status) || 0
+    const canRetry =
+      (status === 404 || status === 405) &&
+      API_ENDPOINTS.BILLET.LIST !== API_ENDPOINTS.BILLET.BASE
+    if (!canRetry) throw e
+    raw = await apiGet(API_ENDPOINTS.BILLET.BASE)
+  }
   let list = unwrapBilletList(raw)
   if (auth.role !== 'superadmin') {
     list = scopeEntitiesToUserSociete(list, { role: auth.role, societeId: auth.societeId })
@@ -53,7 +62,7 @@ export function listBilletsByReservationId(idReservation) {
   if (!Number.isFinite(nid) || nid <= 0) {
     return Promise.reject(new Error('Identifiant réservation invalide.'))
   }
-  return apiGet(`/api/Billet/reservation/${nid}`, JSON_ACCEPT).then(unwrapBilletList)
+  return apiGet(API_ENDPOINTS.BILLET.byReservation(nid)).then(unwrapBilletList)
 }
 
 /**
@@ -63,7 +72,7 @@ export function listBilletsByReservationId(idReservation) {
 export function listBilletsByQrCode(qrCode) {
   const q = String(qrCode ?? '').trim()
   if (!q) return Promise.reject(new Error('Code QR invalide.'))
-  return apiGet(`/api/Billet/qrcode/${encodeURIComponent(q)}`, JSON_ACCEPT).then(unwrapBilletList)
+  return apiGet(API_ENDPOINTS.BILLET.byQrCode(encodeURIComponent(q))).then(unwrapBilletList)
 }
 
 /**
@@ -77,7 +86,7 @@ export function listBilletsByQrCode(qrCode) {
  * }} body
  */
 export function createBillet(body) {
-  return apiPost('/api/Billet', body, JSON_ACCEPT)
+  return apiPost(API_ENDPOINTS.BILLET.CREATE, body)
 }
 
 /**
@@ -106,5 +115,6 @@ export function mapBilletFromApi(row) {
     numeroBus: String(r.numeroBus ?? r.NumeroBus ?? '').trim(),
     statutReservation: String(r.statutReservation ?? r.StatutReservation ?? ''),
     dateGeneration: formatDateOnly(r.dateGeneration ?? r.DateGeneration),
+    urlBillet: String(r.urlBillet ?? r.UrlBillet ?? '').trim(),
   }
 }

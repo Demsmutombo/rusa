@@ -380,6 +380,58 @@
               <input v-model="createForm.statut" type="checkbox" class="size-4 rounded border-gray-300 text-primary-600" />
               <span class="text-sm text-gray-700 dark:text-primary-200/90">Actif (champ statut)</span>
             </label>
+
+            <div class="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-primary-800/55 dark:bg-primary-900/35">
+              <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-primary-300/80">
+                Paiement & billet automatique
+              </p>
+              <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-primary-200/90">Montant à payer *</label>
+                  <input
+                    v-model.number="createForm.montantAPaye"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-primary-700 dark:bg-primary-900/80 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-primary-200/90">Montant payé *</label>
+                  <input
+                    v-model.number="createForm.montantPaye"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-primary-700 dark:bg-primary-900/80 dark:text-gray-100"
+                  />
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-primary-200/90">Méthode de paiement *</label>
+                  <select
+                    v-model="createForm.methodePaiement"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-primary-700 dark:bg-primary-900/80 dark:text-gray-100 dark:focus:border-primary-400"
+                  >
+                    <option value="">— Choisir —</option>
+                    <option v-for="m in paiementMethodOptions" :key="m" :value="m">
+                      {{ m }}
+                    </option>
+                  </select>
+                </div>
+                <div>
+                  <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-primary-200/90">Référence transaction</label>
+                  <input
+                    v-model.trim="createForm.referenceTransaction"
+                    type="text"
+                    placeholder="Optionnel"
+                    class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-900 shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 dark:border-primary-700 dark:bg-primary-900/80 dark:text-gray-100"
+                  />
+                </div>
+              </div>
+              <p v-if="selectedVoyageUnitPrice > 0" class="mt-2 text-xs text-gray-600 dark:text-primary-300/80">
+                Prix indicatif du voyage sélectionné : {{ formatMoneyFc(selectedVoyageUnitPrice) }} / place.
+              </p>
+            </div>
           </div>
 
           <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -398,6 +450,73 @@
               @click="submitCreateReservation"
             >
               {{ createSaving ? 'Enregistrement…' : 'Créer' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <Teleport to="body">
+      <div
+        v-if="showCreateResultModal && createResult"
+        class="fixed inset-0 z-[200000] flex items-center justify-center bg-black/50 p-4"
+        role="dialog"
+        aria-modal="true"
+        @click.self="closeCreateResultModal"
+      >
+        <div class="w-full max-w-lg rounded-xl border border-gray-200 bg-white p-5 shadow-2xl dark:border-primary-800/60 dark:bg-primary-950">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
+            {{ createResultHasBillet ? 'Billet généré automatiquement' : 'Réservation et paiement enregistrés' }}
+          </h3>
+          <p class="mt-1 text-sm text-gray-600 dark:text-primary-300/85">
+            {{
+              createResult.message ||
+              (createResultHasBillet
+                ? 'Réservation, paiement et billet enregistrés avec succès.'
+                : "Réservation et paiement enregistrés. Aucun billet n'a été renvoyé par l'API.")
+            }}
+          </p>
+          <div class="mt-4 space-y-2 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-primary-800/55 dark:bg-primary-900/35">
+            <p>
+              <span class="font-medium">Transaction :</span>
+              {{ createResult.transactionId || '—' }}
+            </p>
+            <p>
+              <span class="font-medium">Statut :</span>
+              {{ createResult.statut || '—' }}
+            </p>
+            <p>
+              <span class="font-medium">Date :</span>
+              {{ formatDateTime(createResult.dateCreation) }}
+            </p>
+            <p>
+              <span class="font-medium">Réservation :</span>
+              #{{ pickObjValue(createResult.reservation, 'idReservation', 'IdReservation') || '—' }}
+            </p>
+            <p>
+              <span class="font-medium">Paiement :</span>
+              #{{ pickObjValue(createResult.paiement, 'idPaiement', 'IdPaiement') || '—' }}
+            </p>
+            <p>
+              <span class="font-medium">Billet :</span>
+              {{ createResultHasBillet ? `#${createResultBilletId}` : 'Non généré' }}
+            </p>
+            <p v-if="createResultHasBillet">
+              <span class="font-medium">QR :</span>
+              {{ pickObjValue(createResult.billet, 'qrCode', 'QRCode') || '—' }}
+            </p>
+            <p v-if="createResultHasBillet" class="break-all">
+              <span class="font-medium">URL billet :</span>
+              {{ pickObjValue(createResult.billet, 'urlBillet', 'UrlBillet') || '—' }}
+            </p>
+          </div>
+          <div class="mt-5 flex justify-end gap-3">
+            <button
+              type="button"
+              class="rounded-lg border border-gray-200 bg-gray-100 px-4 py-2 text-sm font-semibold text-gray-800 dark:border-primary-700 dark:bg-primary-900/60 dark:text-primary-100"
+              @click="closeCreateResultModal"
+            >
+              Fermer
             </button>
           </div>
         </div>
@@ -535,7 +654,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
 import { notify } from '@/utils/notify'
 import { useAdminModuleGreeting } from '@/composables/useAdminModuleGreeting'
@@ -551,8 +670,9 @@ import {
   reservationRawToPutBody,
   updateReservation,
   mapUiStatutToApi,
-  createReservation,
+  createReservationWithPaiement,
   buildReservationCreateBody,
+  unwrapReservationWithPaiementResponse,
 } from '@/services/reservationService'
 import { getSociete } from '@/services/societeService'
 import { exportReservationsToPdf } from '@/utils/exportReservationsPdf'
@@ -564,7 +684,9 @@ const { idSocieteForSave } = useTenantSocieteId()
 
 const showCreateModal = ref(false)
 const showDetailModal = ref(false)
+const showCreateResultModal = ref(false)
 const detailReservation = ref(null)
+const createResult = ref(null)
 const createRefsLoading = ref(false)
 const createSaving = ref(false)
 const exporting = ref(false)
@@ -595,7 +717,13 @@ const createForm = ref({
   dateReservation: todayIsoDate(),
   statutReservation: RESERVATION_STATUT_RESERVATION.pending,
   statut: true,
+  montantAPaye: 0,
+  montantPaye: 0,
+  methodePaiement: 'Cash',
+  referenceTransaction: '',
 })
+
+const paiementMethodOptions = ['Mobile Money', 'Cash', 'Carte bancaire', 'Virement']
 
 function clientRowId(c) {
   const n = Number(c?.idClient ?? c?.IdClient)
@@ -663,9 +791,35 @@ function voyageRowId(v) {
 function voyageOptionLabel(v) {
   const d = String(v.dateDepart ?? v.DateDepart ?? '').slice(0, 10)
   const time = ticksToHHmm(v.heureDepart ?? v.HeureDepart) || '—'
+  const depart = String(v.villeDepart ?? v.VilleDepart ?? '').trim()
+  const arrivee = String(v.villeArrivee ?? v.VilleArrivee ?? '').trim()
+  const route = depart && arrivee ? `${depart} → ${arrivee}` : depart || arrivee || 'Trajet'
   const p = Number(v.prix ?? v.Prix) || 0
-  return `${d} · ${time} — ${formatMoneyFc(p)}`
+  return `${route} · ${d} · ${time} — ${formatMoneyFc(p)}`
 }
+
+const selectedVoyageUnitPrice = computed(() => {
+  const id = Number(String(createForm.value.idVoyage || '').trim())
+  if (!Number.isFinite(id) || id <= 0) return 0
+  const v = voyageChoices.value.find((x) => voyageRowId(x) === id)
+  if (!v) return 0
+  return Number(v.prix ?? v.Prix) || 0
+})
+
+const expectedPaymentAmount = computed(() => {
+  const unit = Number(selectedVoyageUnitPrice.value) || 0
+  const placesRaw = Number(createForm.value.nombrePlaces)
+  const places = Number.isFinite(placesRaw) && placesRaw > 0 ? Math.floor(placesRaw) : 1
+  return unit > 0 ? unit * places : 0
+})
+
+watch(expectedPaymentAmount, (next) => {
+  if (!(next > 0)) return
+  const currentToPay = Number(createForm.value.montantAPaye)
+  const currentPaid = Number(createForm.value.montantPaye)
+  if (!(currentToPay > 0)) createForm.value.montantAPaye = next
+  if (!(currentPaid > 0)) createForm.value.montantPaye = next
+})
 
 function sortVoyagesForPicker(list) {
   return [...list].sort((a, b) => {
@@ -686,6 +840,10 @@ function resetCreateForm() {
     dateReservation: todayIsoDate(),
     statutReservation: RESERVATION_STATUT_RESERVATION.pending,
     statut: true,
+    montantAPaye: 0,
+    montantPaye: 0,
+    methodePaiement: 'Cash',
+    referenceTransaction: '',
   }
 }
 
@@ -693,6 +851,36 @@ function closeCreateReservation() {
   if (createSaving.value) return
   showCreateModal.value = false
 }
+
+function closeCreateResultModal() {
+  showCreateResultModal.value = false
+  createResult.value = null
+}
+
+function pickObjValue(obj, ...keys) {
+  const o = obj && typeof obj === 'object' ? obj : {}
+  for (const k of keys) {
+    if (o[k] != null && o[k] !== '') return o[k]
+  }
+  return ''
+}
+
+function formatDateTime(value) {
+  const s = String(value || '').trim()
+  if (!s) return '—'
+  const d = new Date(s)
+  if (Number.isNaN(d.getTime())) return s.slice(0, 19)
+  return d.toLocaleString('fr-FR', { dateStyle: 'short', timeStyle: 'short' })
+}
+
+const createResultBilletId = computed(() => {
+  if (!createResult.value) return 0
+  return Number(
+    pickObjValue(createResult.value.billet, 'id', 'Id', 'idBillet', 'IdBillet'),
+  ) || 0
+})
+
+const createResultHasBillet = computed(() => createResultBilletId.value > 0)
 
 async function openCreateReservation() {
   resetCreateForm()
@@ -740,18 +928,63 @@ async function submitCreateReservation() {
     await notify.warning('Société', 'idSociete est requis : vérifiez la société de session ou le contexte super-admin.')
     return
   }
+  const montantAPaye = Number(createForm.value.montantAPaye)
+  const montantPaye = Number(createForm.value.montantPaye)
+  if (!Number.isFinite(montantAPaye) || montantAPaye <= 0) {
+    await notify.warning('Montant à payer', 'Indiquez un montant à payer strictement supérieur à 0.')
+    return
+  }
+  if (!Number.isFinite(montantPaye) || montantPaye <= 0) {
+    await notify.warning('Montant payé', 'Indiquez un montant payé strictement supérieur à 0.')
+    return
+  }
+  const methodePaiement = String(createForm.value.methodePaiement || '').trim()
+  if (!methodePaiement) {
+    await notify.warning('Méthode de paiement', 'Renseignez la méthode de paiement.')
+    return
+  }
+  const idUtilisateur = Number(body.idUtilisateur)
+  if (!Number.isFinite(idUtilisateur) || idUtilisateur <= 0) {
+    await notify.warning('Utilisateur', 'idUtilisateur est requis pour enregistrer le paiement.')
+    return
+  }
+  const payload = {
+    reservation: {
+      idVoyage: Number(body.idVoyage) || 0,
+      idClient: Number(body.idClient) || 0,
+      nombreDePlace: Number(body.nombrePlaces) || 1,
+      idSociete: Number(body.idSociete) || 0,
+    },
+    paiement: {
+      montantAPaye,
+      montantPaye,
+      methodePaiement,
+      referenceTransaction: String(createForm.value.referenceTransaction || '').trim(),
+      idUtilisateur,
+    },
+  }
   if (import.meta.env.DEV) {
-    console.info('[POST /api/Reservation] corps envoyé', body)
+    console.info('[POST /api/Reservation/reservation_with_paiement] corps envoyé', payload)
   }
   createSaving.value = true
   try {
-    await createReservation(body)
-    notify.toast.success('Réservation créée')
+    const raw = await createReservationWithPaiement(payload)
+    const result = unwrapReservationWithPaiementResponse(raw)
+    createResult.value = result
+    showCreateResultModal.value = true
+    if (Number(pickObjValue(result.billet, 'id', 'Id', 'idBillet', 'IdBillet')) > 0) {
+      notify.toast.success('Réservation, paiement et billet traités')
+    } else {
+      await notify.warning(
+        'Paiement enregistré',
+        "La réservation et le paiement sont créés, mais l'API n'a pas renvoyé de billet émis.",
+      )
+    }
     showCreateModal.value = false
     await loadReservations()
   } catch (e) {
     if (import.meta.env.DEV && e?.responseBody) {
-      console.error('[POST /api/Reservation] corps d’erreur API', e.responseBody)
+      console.error('[POST /api/Reservation/reservation_with_paiement] corps d’erreur API', e.responseBody)
     }
     const detail = e?.message || 'Erreur API.'
     const hint500 =

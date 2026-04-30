@@ -5,13 +5,9 @@
 
 import { useAuthStore } from '@/stores/auth'
 import { scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
+import { API_ENDPOINTS } from './Endpoint.service'
 import { apiGet, apiPost, apiPut } from './apiService'
 
-const JSON_ACCEPT = {
-  headers: {
-    Accept: 'text/plain, application/json;q=0.9, */*;q=0.8',
-  },
-}
 
 export function unwrapTypeBusList(data) {
   if (data == null) return []
@@ -22,7 +18,7 @@ export function unwrapTypeBusList(data) {
 
 export async function listTypeBusArray() {
   const auth = useAuthStore()
-  const raw = await apiGet('/api/TypeBus', JSON_ACCEPT)
+  const raw = await apiGet(API_ENDPOINTS.TYPE_BUS.BASE)
   let list = unwrapTypeBusList(raw)
   list = scopeEntitiesToUserSociete(list, { role: auth.role, societeId: auth.societeId })
   return list
@@ -32,7 +28,7 @@ export async function listTypeBusArray() {
  * @param {{ libelle: string, idSociete: number, statut?: boolean }} body
  */
 export function createTypeBus(body) {
-  return apiPost('/api/TypeBus', body, JSON_ACCEPT)
+  return apiPost(API_ENDPOINTS.TYPE_BUS.BASE, body)
 }
 
 /**
@@ -44,7 +40,7 @@ export function updateTypeBus(id, body) {
   if (!Number.isFinite(nid) || nid <= 0) {
     return Promise.reject(new Error('Identifiant type de bus invalide.'))
   }
-  return apiPut(`/api/TypeBus/${nid}`, body, JSON_ACCEPT)
+  return apiPut(API_ENDPOINTS.TYPE_BUS.byId(nid), body)
 }
 
 /**

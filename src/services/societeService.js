@@ -5,14 +5,10 @@
 
 import { useAuthStore } from '@/stores/auth'
 import { scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
-import { apiGet, apiPost, apiPut, apiDelete } from './apiService'
+import { API_ENDPOINTS } from './Endpoint.service'
+import { apiGet, apiPost, apiPut } from './apiService'
 
 /** Aligné Swagger (souvent text/plain + corps JSON). */
-const JSON_ACCEPT = {
-  headers: {
-    Accept: 'application/json, text/plain;q=0.9, */*;q=0.8',
-  },
-}
 
 /** Réponse GET collection : tableau brut ou enveloppe { data, items, … } */
 export function unwrapSocieteList(data) {
@@ -69,7 +65,7 @@ export function normalizeSocieteUpdate(input) {
 }
 
 export function listSocietes() {
-  return apiGet('/api/Societe', JSON_ACCEPT)
+  return apiGet(API_ENDPOINTS.SOCIETE.BASE)
 }
 
 /** Liste toujours sous forme de tableau */
@@ -145,19 +141,33 @@ function mergeSocieteDashboardRow(api, dash) {
 }
 
 export function getSociete(id) {
-  return apiGet(`/api/Societe/${id}`, JSON_ACCEPT)
+  return apiGet(API_ENDPOINTS.SOCIETE.byId(id))
 }
 
 export function createSociete(body) {
-  return apiPost('/api/Societe', normalizeSocieteCreate(body))
+  return apiPost(API_ENDPOINTS.SOCIETE.BASE, normalizeSocieteCreate(body))
 }
 
 export function updateSociete(id, body) {
-  return apiPut(`/api/Societe/${id}`, normalizeSocieteUpdate(body))
+  return apiPut(API_ENDPOINTS.SOCIETE.byId(id), normalizeSocieteUpdate(body))
 }
 
 export function deleteSociete(id) {
-  return apiDelete(`/api/Societe/${id}`)
+  // Contrat métier: pas de suppression physique, désactivation logique.
+  const nid = Number(id)
+  if (!Number.isFinite(nid) || nid <= 0) {
+    return Promise.reject(new Error('Identifiant société invalide.'))
+  }
+  return getSociete(nid)
+    .then((raw) => {
+      const current = raw?.data && typeof raw.data === 'object' ? raw.data : raw
+      const body = normalizeSocieteUpdate({ ...(current || {}), idSociete: nid, statut: false })
+      return apiPut(API_ENDPOINTS.SOCIETE.byId(nid), body)
+    })
+    .catch(() => {
+      // Fallback minimal si GET échoue.
+      return apiPut(API_ENDPOINTS.SOCIETE.byId(nid), { idSociete: nid, statut: false })
+    })
 }
 
 /** Objet unique pour imports style guide projet */

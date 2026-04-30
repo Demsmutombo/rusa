@@ -1,9 +1,7 @@
 <template>
   <div class="super-admin-dash min-w-0 w-full space-y-4 sm:space-y-6">
     <!-- En-tête -->
-    <div
-      class="rusa-gradient-header relative overflow-hidden rounded-2xl p-4 shadow-lg sm:p-6"
-    >
+    <div class="dashboard-hero">
       <div
         class="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 sm:h-40 sm:w-40"
         aria-hidden="true"
@@ -59,9 +57,50 @@
     </template>
 
     <template v-else-if="initialLoadDone">
+      <section v-if="dashboard && superAdminModernCards.length" class="space-y-4" aria-label="Vue synthétique super-admin">
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <article
+            v-for="(card, idx) in superAdminModernCards"
+            :key="`modern-${card.key}`"
+            class="dashboard-kpi-card"
+            :class="idx === 0 ? 'dashboard-kpi-card-accent' : ''"
+          >
+            <p class="text-xs font-medium" :class="idx === 0 ? 'text-white/85' : 'text-gray-500 dark:text-primary-400/80'">{{ card.label }}</p>
+            <p class="mt-1 text-lg font-bold tabular-nums" :class="idx === 0 ? 'text-white' : 'text-gray-900 dark:text-white'">{{ card.format(stats[card.key]) }}</p>
+          </article>
+        </div>
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <article class="dashboard-panel-soft lg:col-span-9">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Evolution du chiffre d'affaires</h3>
+              <span class="text-xs text-gray-500 dark:text-primary-300/80">{{ superAdminTrendBars.length }} points affiches</span>
+            </div>
+            <div class="grid min-h-[150px] grid-cols-6 items-end gap-2 rounded-lg border border-primary-100/70 bg-white/70 p-3 dark:border-primary-800/50 dark:bg-primary-950/40">
+              <div v-for="bar in superAdminTrendBars" :key="bar.label" class="flex flex-col items-center gap-1">
+                <div class="w-full rounded-md bg-gradient-to-t from-[var(--color-700)] to-[var(--color-400)]" :style="{ height: `${bar.height}%`, minHeight: '8px' }" />
+                <span class="text-[10px] font-semibold text-gray-600 dark:text-primary-300/85">{{ bar.label }}</span>
+              </div>
+            </div>
+          </article>
+          <article class="dashboard-panel-soft lg:col-span-3">
+            <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Taux recouvrement global</h3>
+            <div class="mx-auto grid h-28 w-28 place-items-center rounded-full" :style="superAdminDonutStyle">
+              <div class="grid h-20 w-20 place-items-center rounded-full bg-white text-sm font-bold text-gray-900 dark:bg-primary-950 dark:text-white">
+                {{ formatPercent(stats.tauxRecouvrementGlobal ?? 0) }}
+              </div>
+            </div>
+            <ul class="mt-3 space-y-1 border-t border-primary-100/80 pt-2 text-xs text-gray-600 dark:border-primary-800/60 dark:text-primary-300/85">
+              <li>Total utilisateurs: {{ ustats.totalUtilisateurs ?? 0 }}</li>
+              <li>Actifs mois: {{ ustats.utilisateursActifsMois ?? 0 }}</li>
+              <li>Connectés: {{ ustats.utilisateursConnectes ?? 0 }}</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
       <!-- KPI -->
       <section
-        v-if="dashboard"
+        v-if="dashboard && kpiCardsVisible.length"
         aria-label="Indicateurs globaux"
       >
         <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-primary-900 dark:text-white">
@@ -70,7 +109,7 @@
             aria-hidden="true"
           />
           {{
-            SUPER_ADMIN_DASH_FLAGS.kpiFinanceAndClients
+            superAdminDashFlags.kpiFinanceAndClients
               ? 'Indicateurs globaux'
               : 'Sociétés — aperçu'
           }}
@@ -105,7 +144,7 @@
 
       <!-- Graphiques -->
       <section
-        v-if="dashboard && SUPER_ADMIN_DASH_FLAGS.trends"
+        v-if="dashboard && superAdminDashFlags.trends"
         aria-label="Tendances"
       >
         <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-primary-900 dark:text-white">
@@ -178,11 +217,11 @@
       <!-- Sociétés + utilisateurs -->
       <div
         class="grid grid-cols-1 gap-4"
-        :class="SUPER_ADMIN_DASH_FLAGS.users ? 'xl:grid-cols-3 xl:gap-6' : ''"
+        :class="superAdminDashFlags.users ? 'xl:grid-cols-3 xl:gap-6' : ''"
       >
         <div
           class="min-w-0 rusa-panel overflow-hidden dark:border-primary-800 dark:bg-gray-900/30"
-          :class="SUPER_ADMIN_DASH_FLAGS.users ? 'xl:col-span-2' : ''"
+          :class="superAdminDashFlags.users ? 'xl:col-span-2' : ''"
         >
           <div
             class="border-b border-primary-100 px-3 py-3 sm:px-4 dark:border-primary-800"
@@ -244,28 +283,44 @@
                 </span>
               </div>
               <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs sm:text-sm">
-                <div class="rounded-lg bg-primary-50/50 p-2 dark:bg-primary-950/30">
+                <div
+                  v-if="permFac"
+                  class="rounded-lg bg-primary-50/50 p-2 dark:bg-primary-950/30"
+                >
                   <dt class="text-[10px] font-medium uppercase text-gray-500 dark:text-gray-400">CA (mois)</dt>
                   <dd class="mt-0.5 font-semibold tabular-nums text-gray-900 dark:text-white">
                     {{ formatMoney(s.chiffreAffairesMois) }}
                   </dd>
                 </div>
-                <div class="rounded-lg bg-primary-50/50 p-2 dark:bg-primary-950/30">
+                <div
+                  v-if="permFac"
+                  class="rounded-lg bg-primary-50/50 p-2 dark:bg-primary-950/30"
+                >
                   <dt class="text-[10px] font-medium uppercase text-gray-500 dark:text-gray-400">Arriérés</dt>
                   <dd class="mt-0.5 font-semibold tabular-nums text-gray-900 dark:text-white">
                     {{ formatMoney(s.montantArrieres) }}
                   </dd>
                 </div>
-                <div class="rounded-lg bg-primary-50/50 p-2 dark:bg-primary-950/30">
+                <div
+                  v-if="permFac"
+                  class="rounded-lg bg-primary-50/50 p-2 dark:bg-primary-950/30"
+                >
                   <dt class="text-[10px] font-medium uppercase text-gray-500 dark:text-gray-400">Recouv.</dt>
                   <dd class="mt-0.5 font-semibold tabular-nums text-gray-900 dark:text-white">
                     {{ formatPercent(s.tauxRecouvrement) }}
                   </dd>
                 </div>
-                <div class="rounded-lg bg-primary-50/50 p-2 dark:bg-primary-950/30">
+                <div
+                  v-if="permCli || permUser"
+                  class="rounded-lg bg-primary-50/50 p-2 dark:bg-primary-950/30"
+                >
                   <dt class="text-[10px] font-medium uppercase text-gray-500 dark:text-gray-400">Clients / Utilis.</dt>
                   <dd class="mt-0.5 font-semibold tabular-nums text-gray-900 dark:text-white">
-                    {{ s.nombreClientsActifs ?? '—' }} · {{ s.nombreUtilisateurs ?? '—' }}
+                    <template v-if="permCli">{{ s.nombreClientsActifs ?? '—' }}</template>
+                    <template v-else>—</template>
+                    <span v-if="permCli || permUser"> · </span>
+                    <template v-if="permUser">{{ s.nombreUtilisateurs ?? '—' }}</template>
+                    <template v-else>—</template>
                   </dd>
                 </div>
               </dl>
@@ -282,11 +337,36 @@
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Société</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                   <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">CA (mois)</th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Arriérés</th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Recouv.</th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Clients</th>
-                  <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Utilis.</th>
+                  <th
+                    v-if="permFac"
+                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase"
+                  >
+                    CA (mois)
+                  </th>
+                  <th
+                    v-if="permFac"
+                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase"
+                  >
+                    Arriérés
+                  </th>
+                  <th
+                    v-if="permFac"
+                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase"
+                  >
+                    Recouv.
+                  </th>
+                  <th
+                    v-if="permCli"
+                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase"
+                  >
+                    Clients
+                  </th>
+                  <th
+                    v-if="permUser"
+                    class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase"
+                  >
+                    Utilis.
+                  </th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-primary-100 dark:divide-primary-800/50">
@@ -319,11 +399,36 @@
                     >{{ shortUrl(s.siteWeb) }}</a>
                     <span v-if="!s.emailContact && !s.telephone && !s.siteWeb">—</span>
                   </td>
-                  <td class="px-4 py-3 text-right tabular-nums">{{ formatMoney(s.chiffreAffairesMois) }}</td>
-                  <td class="px-4 py-3 text-right tabular-nums">{{ formatMoney(s.montantArrieres) }}</td>
-                  <td class="px-4 py-3 text-right tabular-nums">{{ formatPercent(s.tauxRecouvrement) }}</td>
-                  <td class="px-4 py-3 text-right tabular-nums">{{ s.nombreClientsActifs ?? '—' }}</td>
-                  <td class="px-4 py-3 text-right tabular-nums">{{ s.nombreUtilisateurs ?? '—' }}</td>
+                  <td
+                    v-if="permFac"
+                    class="px-4 py-3 text-right tabular-nums"
+                  >
+                    {{ formatMoney(s.chiffreAffairesMois) }}
+                  </td>
+                  <td
+                    v-if="permFac"
+                    class="px-4 py-3 text-right tabular-nums"
+                  >
+                    {{ formatMoney(s.montantArrieres) }}
+                  </td>
+                  <td
+                    v-if="permFac"
+                    class="px-4 py-3 text-right tabular-nums"
+                  >
+                    {{ formatPercent(s.tauxRecouvrement) }}
+                  </td>
+                  <td
+                    v-if="permCli"
+                    class="px-4 py-3 text-right tabular-nums"
+                  >
+                    {{ s.nombreClientsActifs ?? '—' }}
+                  </td>
+                  <td
+                    v-if="permUser"
+                    class="px-4 py-3 text-right tabular-nums"
+                  >
+                    {{ s.nombreUtilisateurs ?? '—' }}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -331,7 +436,7 @@
         </div>
 
         <div
-          v-if="dashboard && SUPER_ADMIN_DASH_FLAGS.users"
+          v-if="dashboard && superAdminDashFlags.users"
           class="rusa-card-static min-w-0 p-3 sm:p-4 dark:border-primary-800 dark:bg-gray-900/40"
         >
           <h2 class="text-sm font-semibold text-primary-900 dark:text-white">Utilisateurs</h2>
@@ -373,7 +478,7 @@
 
       <!-- Top 5 -->
       <div
-        v-if="dashboard && SUPER_ADMIN_DASH_FLAGS.top5"
+        v-if="dashboard && superAdminDashFlags.top5"
         class="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-6"
       >
         <div class="rusa-card-static p-3 sm:p-4 dark:border-primary-800 dark:bg-gray-900/40">
@@ -438,7 +543,7 @@
 
       <!-- Alertes -->
       <section
-        v-if="dashboard && SUPER_ADMIN_DASH_FLAGS.alerts"
+        v-if="dashboard && superAdminDashFlags.alerts"
         aria-label="Alertes critiques"
       >
         <h2 class="mb-3 flex items-center gap-2 text-sm font-semibold text-primary-900 dark:text-white">
@@ -501,25 +606,33 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
 import { useAuthStore } from '@/stores/auth'
+import { PERM } from '@/config/adminModulePermissions'
 import { fetchSuperAdminDashboard } from '@/services/superAdminDashboardService'
 import {
   listSocietesArray,
   mergeSocietesWithDashboardStats,
 } from '@/services/societeService'
 
-/**
- * Affichage progressif : mettre à true pour activer chaque zone du tableau de bord.
- */
-const SUPER_ADMIN_DASH_FLAGS = {
-  /** Clients, CA, paiements, arriérés, recouvrement global, factures, nb paiements */
-  kpiFinanceAndClients: false,
-  trends: false,
-  users: false,
-  top5: false,
-  alerts: false,
-}
+const DASHBOARD_API_DISABLED =
+  String(import.meta.env.VITE_DISABLE_DASHBOARD_API ?? '0').trim() === '1'
 
 const authStore = useAuthStore()
+
+const permSoc = computed(() => authStore.hasAnyPermission(PERM.societes))
+const permCli = computed(() => authStore.hasAnyPermission(PERM.clients))
+const permFac = computed(() => authStore.hasAnyPermission(PERM.factures))
+const permPay = computed(() => authStore.hasAnyPermission(PERM.paiements))
+const permUser = computed(() => authStore.hasAnyPermission(PERM.utilisateurs))
+
+/** Zones du tableau de bord selon les claims JWT (Super-Admin). */
+const superAdminDashFlags = computed(() => ({
+  kpiFinanceAndClients:
+    permSoc.value && (permCli.value || permFac.value || permPay.value),
+  trends: permFac.value,
+  users: permUser.value,
+  top5: permSoc.value && permFac.value,
+  alerts: permSoc.value,
+}))
 
 function firstNameFromUser(u) {
   const full = String(u?.nomComplet || u?.NomComplet || '').trim()
@@ -645,11 +758,47 @@ const globalCards = [
   { key: 'totalPaiements', label: 'Nombre de paiements', format: (v) => String(v ?? 0) },
 ]
 
-const kpiCardsVisible = computed(() => {
-  if (SUPER_ADMIN_DASH_FLAGS.kpiFinanceAndClients) return globalCards
-  return globalCards.filter(
-    (c) => c.key === 'totalSocietes' || c.key === 'societesActives'
-  )
+const KPI_CARD_PERMS = {
+  totalSocietes: PERM.societes,
+  societesActives: PERM.societes,
+  totalClients: PERM.clients,
+  clientsActifs: PERM.clients,
+  chiffreAffairesGlobal: PERM.factures,
+  montantTotalPaiementsGlobal: PERM.paiements,
+  montantTotalArrieresGlobal: PERM.factures,
+  tauxRecouvrementGlobal: PERM.factures,
+  totalFactures: PERM.factures,
+  totalPaiements: PERM.paiements,
+}
+
+const kpiCardsVisible = computed(() =>
+  globalCards.filter((c) => authStore.hasAnyPermission(KPI_CARD_PERMS[c.key])),
+)
+
+const superAdminModernCards = computed(() => kpiCardsVisible.value.slice(0, 4))
+
+const superAdminDonutPercent = computed(() => {
+  const n = Number(stats.value.tauxRecouvrementGlobal ?? 0)
+  if (!Number.isFinite(n)) return 0
+  return Math.max(0, Math.min(100, n))
+})
+
+const superAdminDonutStyle = computed(() => ({
+  background: `conic-gradient(var(--color-600) 0% ${superAdminDonutPercent.value}%, var(--color-100) ${superAdminDonutPercent.value}% 100%)`,
+}))
+
+const superAdminTrendBars = computed(() => {
+  const rows = (dashboard.value?.tendances?.evolutionChiffreAffaires || []).slice(-6)
+  const values = rows.map((r) => Number(r?.valeur ?? 0))
+  const max = Math.max(1, ...values.map((v) => (Number.isFinite(v) ? v : 0)))
+  const source = rows.length ? rows : Array.from({ length: 6 }, (_, i) => ({ mois: `M${i + 1}`, valeur: 0 }))
+  return source.map((r, i) => {
+    const v = Number(values[i] ?? r.valeur ?? 0)
+    return {
+      label: String(r.mois ?? `M${i + 1}`).slice(-2).toUpperCase(),
+      height: Math.max(10, Math.round(((Number.isFinite(v) ? v : 0) / max) * 100)),
+    }
+  })
 })
 
 const caCategories = computed(() =>
@@ -798,6 +947,11 @@ async function load() {
   initialLoadDone.value = false
   dashboard.value = null
   societesApiRaw.value = []
+  if (DASHBOARD_API_DISABLED) {
+    initialLoadDone.value = true
+    loading.value = false
+    return
+  }
   try {
     const [dashResult, apiResult] = await Promise.allSettled([
       fetchSuperAdminDashboard(),

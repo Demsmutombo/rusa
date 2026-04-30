@@ -12,7 +12,20 @@
       <span
         class="shrink-0 overflow-hidden rounded-full h-9 w-9 sm:mr-3 sm:h-11 sm:w-11"
       >
-        <img :src="avatarSrc" :alt="displayName" class="h-full w-full object-cover" />
+        <img
+          v-if="avatarResolvedUrl && !avatarImgFailed"
+          :src="avatarResolvedUrl"
+          :alt="displayName"
+          class="h-full w-full object-cover"
+          @error="avatarImgFailed = true"
+        />
+        <div
+          v-else
+          class="flex h-full w-full items-center justify-center bg-gray-200 text-xs font-semibold text-gray-600 dark:bg-primary-800/80 dark:text-primary-200"
+          :title="displayName"
+        >
+          {{ avatarInitials }}
+        </div>
       </span>
 
       <span
@@ -86,7 +99,7 @@
 </template>
 
 <script setup>
-import { UserCircleIcon, ChevronDownIcon, LogoutIcon, SettingsIcon, InfoCircleIcon } from '@/icons'
+import { UserCircleIcon, ChevronDownIcon, LogoutIcon, SettingsIcon } from '@/icons'
 import { useRouter } from 'vue-router'
 import { ref, onMounted, onUnmounted, computed, watch, nextTick } from 'vue'
 import { useLocaleStore } from '@/stores/locale'
@@ -97,7 +110,8 @@ import {
   getShortName,
   getDisplayEmail,
   getRoleDisplayLabel,
-  getAvatarSrc,
+  resolveSessionAvatarUrl,
+  profileInitials,
 } from '@/utils/authDisplay'
 
 const localeStore = useLocaleStore()
@@ -114,7 +128,21 @@ const displayEmail = computed(() => getDisplayEmail(user.value))
 
 const roleDisplay = computed(() => getRoleDisplayLabel(user.value, authStore.role))
 
-const avatarSrc = computed(() => getAvatarSrc(user.value))
+const avatarResolvedUrl = computed(() =>
+  resolveSessionAvatarUrl(user.value, authStore.agent)
+)
+
+const avatarInitials = computed(() => profileInitials(user.value))
+
+const avatarImgFailed = ref(false)
+
+watch(
+  () => [user.value, authStore.agent],
+  () => {
+    avatarImgFailed.value = false
+  },
+  { deep: true }
+)
 
 const t = (key) => localeStore.t(key)
 
@@ -164,12 +192,6 @@ const menuItems = computed(() => {
       text: t('edit_profile'),
     })
   }
-
-  items.push({
-    href: '/',
-    icon: InfoCircleIcon,
-    text: t('support'),
-  })
 
   return items
 })

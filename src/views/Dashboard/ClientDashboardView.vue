@@ -1,8 +1,6 @@
 <template>
   <div class="client-dashboard min-w-0 w-full space-y-5 sm:space-y-6">
-    <header
-      class="rusa-gradient-header relative overflow-hidden rounded-2xl p-4 shadow-lg sm:p-6"
-    >
+    <header class="dashboard-hero">
       <div class="relative min-w-0">
         <p class="text-[10px] font-semibold uppercase tracking-widest text-primary-200/90 sm:text-xs">Espace client</p>
         <h1 class="mt-1 text-xl font-bold leading-tight text-white sm:text-2xl">Tableau de bord</h1>
@@ -24,6 +22,48 @@
     </div>
 
     <template v-else-if="!error">
+      <section v-if="modernClientCards.length" class="space-y-4" aria-labelledby="client-modern-summary">
+        <h2 id="client-modern-summary" class="sr-only">Vue synthétique client</h2>
+        <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <article
+            v-for="(card, idx) in modernClientCards"
+            :key="card.key"
+            class="dashboard-kpi-card"
+            :class="idx === 0 ? 'dashboard-kpi-card-accent' : ''"
+          >
+            <p class="text-xs font-medium" :class="idx === 0 ? 'text-white/85' : 'text-gray-500 dark:text-primary-400/80'">{{ card.label }}</p>
+            <p class="mt-1 text-lg font-bold tabular-nums" :class="idx === 0 ? 'text-white' : 'text-gray-900 dark:text-white'">{{ card.display }}</p>
+          </article>
+        </div>
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+          <article class="dashboard-panel-soft lg:col-span-9">
+            <div class="mb-3 flex items-center justify-between gap-3">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Evolution des reservations</h3>
+              <span class="text-xs text-gray-500 dark:text-primary-300/80">{{ clientTrendBars.length }} points</span>
+            </div>
+            <div class="grid min-h-[150px] grid-cols-6 items-end gap-2 rounded-lg border border-primary-100/70 bg-white/70 p-3 dark:border-primary-800/50 dark:bg-primary-950/40">
+              <div v-for="bar in clientTrendBars" :key="bar.label" class="flex flex-col items-center gap-1">
+                <div class="w-full rounded-md bg-gradient-to-t from-[var(--color-700)] to-[var(--color-400)]" :style="{ height: `${bar.height}%`, minHeight: '8px' }" />
+                <span class="text-[10px] font-semibold text-gray-600 dark:text-primary-300/85">{{ bar.label }}</span>
+              </div>
+            </div>
+          </article>
+          <article class="dashboard-panel-soft lg:col-span-3">
+            <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Taux de paiement</h3>
+            <div class="mx-auto grid h-28 w-28 place-items-center rounded-full" :style="clientDonutStyle">
+              <div class="grid h-20 w-20 place-items-center rounded-full bg-white text-sm font-bold text-gray-900 dark:bg-primary-950 dark:text-white">
+                {{ clientPaymentRate }}
+              </div>
+            </div>
+            <ul class="mt-3 space-y-1 border-t border-primary-100/80 pt-2 text-xs text-gray-600 dark:border-primary-800/60 dark:text-primary-300/85">
+              <li>Reservations: {{ resume?.totalReservations ?? 0 }}</li>
+              <li>Paiements: {{ resume?.totalPaiements != null ? formatMoney(resume.totalPaiements) : '0 FC' }}</li>
+              <li>Voyages: {{ resume?.totalVoyages ?? 0 }}</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
       <!-- Statistiques -->
       <section v-if="hasStats" aria-labelledby="client-dash-stats-title">
         <h2 id="client-dash-stats-title" class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
@@ -31,12 +71,23 @@
         </h2>
         <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <div
-            v-for="card in statCards"
+            v-for="(card, idx) in statCards"
             :key="card.key"
-            class="rusa-card p-4"
+            class="dashboard-kpi-card"
+            :class="idx === 0 ? 'dashboard-kpi-card-accent' : ''"
           >
-            <p class="text-xs font-medium text-gray-500 dark:text-primary-400/85">{{ card.label }}</p>
-            <p class="mt-1 text-lg font-bold tabular-nums text-gray-900 dark:text-white">{{ card.display }}</p>
+            <p
+              class="text-xs font-medium"
+              :class="idx === 0 ? 'text-white/85' : 'text-gray-500 dark:text-primary-400/85'"
+            >
+              {{ card.label }}
+            </p>
+            <p
+              class="mt-1 text-lg font-bold tabular-nums"
+              :class="idx === 0 ? 'text-white' : 'text-gray-900 dark:text-white'"
+            >
+              {{ card.display }}
+            </p>
           </div>
         </div>
       </section>
@@ -226,9 +277,11 @@
 import { computed, ref, onMounted } from 'vue'
 import {
   getClientDashboard,
-  unwrapClientDashboardPayload,
   unwrapList,
 } from '@/services/clientDashboardService'
+
+const DASHBOARD_API_DISABLED =
+  String(import.meta.env.VITE_DISABLE_DASHBOARD_API ?? '0').trim() === '1'
 
 const payload = ref(/** @type {Record<string, unknown> | null} */ (null))
 const loading = ref(true)
@@ -250,7 +303,6 @@ const statCards = computed(() => {
   const cards = [
     { key: 'totalResa', label: 'Réservations (total)', value: n(s.nombreTotalReservations ?? s.NombreTotalReservations) },
     { key: 'actives', label: 'Réservations actives', value: n(s.nombreReservationsActives ?? s.NombreReservationsActives) },
-    { key: 'payees', label: 'Réservations payées', value: n(s.nombreReservationsPayees ?? s.NombreReservationsPayees) },
     {
       key: 'montantPaye',
       label: 'Montant total paiements',
@@ -299,6 +351,38 @@ const alertes = computed(() => unwrapList(pick(p.value, 'alertesClient', 'Alerte
 
 const dateGeneration = computed(() => p.value.dateGeneration ?? p.value.DateGeneration ?? '')
 
+const modernClientCards = computed(() => statCards.value.slice(0, 4))
+
+const clientPaymentRate = computed(() => {
+  const s = stats.value
+  const n = Number(s.tauxPaiement ?? s.TauxPaiement ?? 0)
+  return `${Number.isFinite(n) ? n.toLocaleString('fr-FR', { maximumFractionDigits: 1 }) : '0'} %`
+})
+
+const clientDonutPercent = computed(() => {
+  const s = stats.value
+  const n = Number(s.tauxPaiement ?? s.TauxPaiement ?? 0)
+  if (!Number.isFinite(n)) return 0
+  return Math.max(0, Math.min(100, n))
+})
+
+const clientDonutStyle = computed(() => ({
+  background: `conic-gradient(var(--color-600) 0% ${clientDonutPercent.value}%, var(--color-100) ${clientDonutPercent.value}% 100%)`,
+}))
+
+const clientTrendBars = computed(() => {
+  const rows = reservationsRecentes.value.slice(0, 6)
+  const values = rows.map((r) => Number(r.montantPaye ?? r.MontantPaye ?? r.prix ?? r.Prix ?? 0))
+  const max = Math.max(1, ...values.map((v) => (Number.isFinite(v) ? v : 0)))
+  const padded = rows.length ? rows : Array.from({ length: 6 }, (_, i) => ({ dateReservation: `- ${i}` }))
+  return padded.slice(0, 6).map((r, i) => {
+    const v = Number(values[i] ?? 0)
+    const d = new Date(r.dateReservation ?? r.DateReservation ?? Date.now())
+    const label = Number.isNaN(d.getTime()) ? `R${i + 1}` : d.toLocaleDateString('fr-FR', { day: '2-digit' })
+    return { label, height: Math.max(10, Math.round(((Number.isFinite(v) ? v : 0) / max) * 100)) }
+  })
+})
+
 function formatMoney(value) {
   const v = Number(value) || 0
   return `${v.toLocaleString('fr-CD', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} FC`
@@ -317,11 +401,21 @@ function formatDateTime(value) {
 async function load() {
   loading.value = true
   error.value = ''
+  if (DASHBOARD_API_DISABLED) {
+    payload.value = null
+    loading.value = false
+    return
+  }
   try {
-    const raw = await getClientDashboard()
-    payload.value = unwrapClientDashboardPayload(raw)
+    payload.value = await getClientDashboard()
   } catch (e) {
     let msg = e?.message || 'Impossible de charger le tableau de bord client.'
+    if (e?.status === 401) {
+      msg =
+        'Session expirée ou token invalide (401 invalid_token). Reconnectez-vous puis rechargez la page ClientDashboard.'
+    } else if (e?.status === 403) {
+      msg = 'Accès interdit au dashboard client (403). Vérifiez les permissions du compte.'
+    }
     if (e?.status === 500) {
       msg +=
         ' Le serveur a renvoyé une erreur interne sur ClientDashboard : corrigez l’API ou utilisez les sous-routes si seul l’agrégat échoue.'

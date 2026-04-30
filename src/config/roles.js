@@ -86,7 +86,7 @@ const REGISTRY_BY_ID = new Map(
 /** @param {string | null | undefined} slug */
 export function getRoleDefinitionBySlug(slug) {
   if (!slug) return null
-  return REGISTRY_BY_SLUG.get(String(slug)) ?? null
+  return REGISTRY_BY_SLUG.get(String(slug).toLowerCase()) ?? null
 }
 
 /** @param {unknown} idRole */
@@ -280,7 +280,7 @@ function catalogEntryGrantsAdminModule(entry) {
 }
 
 export function userHasAdminModuleAccess(authSnapshot, catalogRoles = []) {
-  const appRole = authSnapshot.role
+  const appRole = String(authSnapshot.role || '').toLowerCase()
   if (!appRole) return false
   if (ADMIN_MODULE_BASE_SLUGS.has(appRole)) return true
   if (appRole === 'gerant' || appRole === 'caissier' || appRole === 'financier') return true
@@ -367,9 +367,18 @@ export function verifyNavigationAccess(to, ctx, catalogRoles = []) {
  */
 export function canAccessPrivateRoute(to, auth, catalogRoles = []) {
   const permissions = to.meta.permissions
+  const roleLc = String(auth.role || '').toLowerCase()
   if (Array.isArray(permissions) && permissions.length) {
-    /** Rôle `admin` : respecter la liste `permissions` (API + localStorage). Autres rôles : chemins métier (`accessPolicy`) sans ce filtre. */
-    if (auth.role === 'admin' && !auth.hasAnyPermission(permissions)) return false
+    /**
+     * `admin` et `superadmin` : si la route déclare `meta.permissions`, l’accès dépend du JWT
+     * (super-admin en liste non vide = strict dans le store) + matrice de secours selon le rôle.
+     */
+    if (
+      (roleLc === 'admin' || roleLc === 'superadmin') &&
+      !auth.hasAnyPermission(permissions)
+    ) {
+      return false
+    }
   }
 
   if (to.meta.adminModule) {
@@ -385,7 +394,8 @@ export function canAccessPrivateRoute(to, auth, catalogRoles = []) {
 
   if (to.meta.roles?.length) {
     if (!auth.role) return false
-    if (!to.meta.roles.includes(auth.role)) return false
+    const allowed = to.meta.roles.some((mr) => String(mr).toLowerCase() === roleLc)
+    if (!allowed) return false
   }
 
   if (shouldEnforceBusinessAccess(to.path)) {

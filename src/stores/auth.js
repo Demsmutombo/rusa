@@ -1,7 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { login, disconnectUser } from '@/services/authService'
-import { resolveAgentForUser } from '@/services/agentService'
+import {
+  login,
+  disconnectUser,
+  extractPermissionsFromAuthPayload,
+} from '@/services/authService'
+import { resolveAgentForUser, pickAgentPhotoUrl } from '@/services/agentService'
 import {
   normalizeAppRole,
   pickIdRoleFromAuthPayload,
@@ -24,6 +28,8 @@ const LS_SA_TENANT_SOCIETE = 'rusa_sa_active_societe'
 const LS_AUTH_ROLE_ID = 'rusa_auth_role_id'
 const LS_AUTH_ROLE_NAME = 'rusa_auth_role_name'
 const LS_AUTH_SOCIETE_ID = 'rusa_auth_societe_id'
+const DISABLE_AUTH_BOOTSTRAP_API =
+  String(import.meta.env.VITE_DISABLE_AUTH_BOOTSTRAP_API ?? '1').trim() === '1'
 
 /** Extrait le libellé de rôle principal depuis la réponse POST authentifier (ou un objet utilisateur). */
 function extractPrimaryRoleNom(data) {
@@ -392,7 +398,7 @@ export const useAuthStore = defineStore('auth', () => {
         superAdminTenantSocieteId.value = null
       }
 
-      const perms = normalizePermissionsList(data.permissions)
+      const perms = normalizePermissionsList(extractPermissionsFromAuthPayload(data))
       permissions.value = perms
       writePermissionsLocal(perms, {
         idRole: idRoleResolved,
@@ -400,7 +406,9 @@ export const useAuthStore = defineStore('auth', () => {
       })
 
       const roleCatalog = useRoleCatalogStore()
-      await roleCatalog.syncFromApi(data.accessToken)
+      if (!DISABLE_AUTH_BOOTSTRAP_API) {
+        await roleCatalog.syncFromApi(data.accessToken)
+      }
 
       if (data.client) {
         client.value = data.client
@@ -421,6 +429,15 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.removeItem('agentData')
       }
 
+      if (user.value && agent.value) {
+        const fromAgent = pickAgentPhotoUrl(agent.value)
+        if (fromAgent && !pickAgentPhotoUrl(user.value)) {
+          const u = { ...user.value, photoUrl: fromAgent }
+          user.value = u
+          localStorage.setItem('user', JSON.stringify(u))
+        }
+      }
+
       if (data.refreshToken) {
         localStorage.setItem('refreshToken', data.refreshToken)
       } else {
@@ -432,7 +449,9 @@ export const useAuthStore = defineStore('auth', () => {
         localStorage.removeItem('expiresAt')
       }
 
-      await refreshUserProfile().catch(() => null)
+      if (!DISABLE_AUTH_BOOTSTRAP_API) {
+        await refreshUserProfile().catch(() => null)
+      }
 
       return data
     } catch (error) {
@@ -456,7 +475,7 @@ export const useAuthStore = defineStore('auth', () => {
       authData.role ??
       resolveAppRoleSlug({ idRole: idr, nom: extractPrimaryRoleNom(authData) })
     role.value = r
-    const perms = normalizePermissionsList(authData.permissions)
+    const perms = normalizePermissionsList(extractPermissionsFromAuthPayload(authData))
     permissions.value = perms
 
     syncSessionFromResolvedUser(
@@ -540,6 +559,30 @@ export const useAuthStore = defineStore('auth', () => {
     if (permission == null || permission === '') return false
     const key = String(permission)
     if (permissions.value.includes(key)) return true
+    /**
+     * Administrateur sans liste de claims JWT : l’API peut n’envoyer que le rôle.
+     * On autorise les lectures module (suffixes .Read / .ReadAll) pour éviter menu / pages vides.
+     */
+    if (
+      String(role.value || '').toLowerCase() === 'admin' &&
+      Array.isArray(permissions.value) &&
+      permissions.value.length === 0 &&
+      (/\.(Read|ReadAll)$/i.test(key) || key === 'Utilisateur.ChangePassword')
+    ) {
+      return true
+    }
+    /**
+     * Super-Admin : si le JWT expose une liste `permissions` explicite, ne pas élargir via la matrice
+     * rôle (`*` dans ROLE_REGISTRY) — le tableau de bord et la sidebar respectent alors l’API.
+     * JWT vide : retomber sur la matrice (accès complet plateforme).
+     */
+    if (
+      String(role.value || '').toLowerCase() === 'superadmin' &&
+      Array.isArray(permissions.value) &&
+      permissions.value.length > 0
+    ) {
+      return false
+    }
     return roleGrantsPermissionCode(role.value, key)
   }
 
@@ -677,10 +720,23 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }
 
+    if (user.value && agent.value) {
+      const fromUser = pickAgentPhotoUrl(user.value)
+      const fromAgent = pickAgentPhotoUrl(agent.value)
+      if (fromAgent && !fromUser) {
+        user.value = { ...user.value, photoUrl: fromAgent }
+        try {
+          localStorage.setItem('user', JSON.stringify(user.value))
+        } catch {
+          /* ignore */
+        }
+      }
+    }
+
     try {
       const roleCatalog = useRoleCatalogStore()
       roleCatalog.hydrateFromStorage()
-      if (token.value) {
+      if (token.value && !DISABLE_AUTH_BOOTSTRAP_API) {
         roleCatalog.syncFromApi(token.value).catch(() => null)
       }
     } catch {
@@ -773,7 +829,7 @@ export const useAuthStore = defineStore('auth', () => {
           nomComplet: profile.nomComplet ?? user.value.nomComplet,
           email: profile.emailAgent || user.value.email,
           telephone: profile.telephoneAgent || user.value.telephone,
-          photoUrl: profile.photoUrl ?? user.value.photoUrl,
+          photoUrl: pickAgentPhotoUrl(profile) ?? pickAgentPhotoUrl(user.value) ?? '',
           idAgent: profile.idAgent,
         }
         if (profile.roleAgent) {

@@ -1,10 +1,7 @@
 <template>
   <div class="admin-dashboard min-w-0 w-full space-y-5 sm:space-y-6">
     <!-- 1. En-tête -->
-    <header
-      class="admin-dash-enter rusa-gradient-header relative overflow-hidden rounded-2xl p-4 shadow-lg sm:p-6"
-      :style="staggerStyle(0)"
-    >
+    <header class="admin-dash-enter dashboard-hero" :style="staggerStyle(0)">
       <div
         class="pointer-events-none absolute -right-6 -top-6 h-28 w-28 rounded-full bg-white/10 sm:h-36 sm:w-36"
         aria-hidden="true"
@@ -21,10 +18,60 @@
       </div>
     </header>
 
+    <section
+      class="admin-dash-enter space-y-4"
+      :style="staggerStyle(1)"
+      aria-labelledby="admin-modern-title"
+    >
+      <h2 id="admin-modern-title" class="sr-only">Vue synthétique administrateur</h2>
+      <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <article
+          v-for="(card, idx) in quickSummaryCards"
+          :key="card.key"
+          class="dashboard-kpi-card"
+          :class="idx === 0 ? 'dashboard-kpi-card-accent' : ''"
+        >
+          <p class="text-xs font-medium" :class="idx === 0 ? 'text-white/85' : 'text-gray-500 dark:text-primary-400/85'">
+            {{ card.label }}
+          </p>
+          <p class="mt-1 text-lg font-bold tabular-nums" :class="idx === 0 ? 'text-white' : 'text-gray-900 dark:text-white'">
+            {{ card.display }}
+          </p>
+        </article>
+      </div>
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <article class="dashboard-panel-soft lg:col-span-9">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Activation des modules</h3>
+            <span class="text-xs text-gray-500 dark:text-primary-300/80">{{ moduleBars.length }} points</span>
+          </div>
+          <div class="grid min-h-[150px] grid-cols-6 items-end gap-2 rounded-lg border border-primary-100/70 bg-white/70 p-3 dark:border-primary-800/50 dark:bg-primary-950/40">
+            <div v-for="bar in moduleBars" :key="bar.key" class="flex flex-col items-center gap-1">
+              <div class="w-full rounded-md bg-gradient-to-t from-[var(--color-700)] to-[var(--color-400)]" :style="{ height: `${bar.height}%`, minHeight: '8px' }" />
+              <span class="text-[10px] font-semibold text-gray-600 dark:text-primary-300/85">{{ bar.label }}</span>
+            </div>
+          </div>
+        </article>
+        <article class="dashboard-panel-soft lg:col-span-3">
+          <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Couverture accès</h3>
+          <div class="mx-auto grid h-28 w-28 place-items-center rounded-full" :style="accessCoverageStyle">
+            <div class="grid h-20 w-20 place-items-center rounded-full bg-white text-sm font-bold text-gray-900 dark:bg-primary-950 dark:text-white">
+              {{ accessCoverageLabel }}
+            </div>
+          </div>
+          <ul class="mt-3 space-y-1 border-t border-primary-100/80 pt-2 text-xs text-gray-600 dark:border-primary-800/60 dark:text-primary-300/85">
+            <li>Modules visibles: {{ quickLinks.length }}</li>
+            <li>Modules attendus: {{ quickLinksAll.length }}</li>
+            <li>Droits JWT: {{ authStore.permissions?.length || 0 }}</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
     <!-- 2. Accès rapides -->
     <section
       class="admin-dash-enter"
-      :style="staggerStyle(1)"
+      :style="staggerStyle(2)"
       aria-labelledby="admin-dash-quick-title"
     >
       <h2
@@ -34,12 +81,19 @@
         <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-primary-500" aria-hidden="true" />
         Accès rapides
       </h2>
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <p
+        v-if="countsReady && !quickLinks.length"
+        class="rounded-xl border border-amber-200/80 bg-amber-50/90 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/35 dark:text-amber-100"
+      >
+        Aucun raccourci : le compte n’a pas les permissions attendues (ex. Agent.Read). Après connexion, vérifiez
+        que l’API renvoie la liste des permissions ou contactez l’administrateur technique.
+      </p>
+      <div v-else-if="quickLinks.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <RouterLink
           v-for="(item, i) in quickLinks"
           :key="item.to"
           :to="item.to"
-          class="admin-dash-enter group flex items-start gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:border-primary-300 hover:shadow-md dark:border-primary-800/70 dark:bg-primary-950/60 dark:hover:border-primary-600"
+          class="admin-dash-enter dashboard-kpi-card group flex items-start gap-3"
           :style="staggerStyle(2 + i)"
         >
           <span
@@ -61,7 +115,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import {
   UserCircleIcon,
@@ -69,14 +123,10 @@ import {
   TruckIcon,
   QueueListIcon,
   CalendarDaysIcon,
+  BanknotesIcon,
 } from '@heroicons/vue/24/outline'
 import { useAuthStore } from '@/stores/auth'
 import { PERM } from '@/config/adminModulePermissions'
-import { listAgentsArray } from '@/services/agentService'
-import { listDestinationsArray } from '@/services/destinationService'
-import { listTypeBusArray } from '@/services/typeBusService'
-import { listBusArray } from '@/services/busService'
-import { listReservationsArray } from '@/services/reservationService'
 
 const authStore = useAuthStore()
 
@@ -108,7 +158,7 @@ const subtitleLine = computed(() => {
 })
 
 /** Compteurs alignés sur les mêmes APIs que les écrans liste. */
-const counts = ref({ agents: 0, destinations: 0, busTypes: 0, buses: 0, reservations: 0 })
+const counts = ref({ agents: 0, destinations: 0, busTypes: 0, buses: 0, reservations: 0, paiements: 0 })
 const countsReady = ref(false)
 
 function hintAgents(c, ready) {
@@ -151,6 +201,14 @@ function hintReservations(c, ready) {
   return `${n} réservations enregistrées`
 }
 
+function hintPaiements(c, ready) {
+  if (!ready) return 'Encaissements et suivi'
+  const n = c.paiements
+  if (n === 0) return 'Aucun paiement listé'
+  if (n === 1) return '1 paiement'
+  return `${n} paiements`
+}
+
 const quickLinksAll = [
   { to: '/admin/agents', label: 'Agents', hint: hintAgents, icon: UserCircleIcon, keys: PERM.agents },
   {
@@ -175,6 +233,13 @@ const quickLinksAll = [
     icon: CalendarDaysIcon,
     keys: PERM.reservations,
   },
+  {
+    to: '/admin/payments',
+    label: 'Paiements',
+    hint: hintPaiements,
+    icon: BanknotesIcon,
+    keys: PERM.paiements,
+  },
 ]
 
 const quickLinks = computed(() => {
@@ -183,44 +248,63 @@ const quickLinks = computed(() => {
     .map(({ keys: _keys, ...rest }) => rest)
 })
 
-onMounted(async () => {
-  try {
-    const [agents, destinations, busTypes, buses, reservations] = await Promise.all([
-      listAgentsArray().catch(() => []),
-      listDestinationsArray().catch(() => []),
-      listTypeBusArray().catch(() => []),
-      listBusArray().catch(() => []),
-      listReservationsArray().catch(() => []),
-    ])
-    counts.value = {
-      agents: Array.isArray(agents) ? agents.length : 0,
-      destinations: Array.isArray(destinations) ? destinations.length : 0,
-      busTypes: Array.isArray(busTypes) ? busTypes.length : 0,
-      buses: Array.isArray(buses) ? buses.length : 0,
-      reservations: Array.isArray(reservations) ? reservations.length : 0,
-    }
-  } catch {
-    counts.value = { agents: 0, destinations: 0, busTypes: 0, buses: 0, reservations: 0 }
-  } finally {
-    countsReady.value = true
-  }
+const quickSummaryCards = computed(() => {
+  const total = quickLinksAll.length
+  const enabled = quickLinks.value.length
+  const denied = Math.max(0, total - enabled)
+  const claims = Number(authStore.permissions?.length || 0)
+  return [
+    { key: 'enabled', label: 'Modules actifs', display: String(enabled) },
+    { key: 'denied', label: 'Modules masqués', display: String(denied) },
+    { key: 'claims', label: 'Claims JWT', display: String(claims) },
+    { key: 'ready', label: 'Compteurs', display: countsReady.value ? 'OK' : 'N/A' },
+  ]
 })
+
+const accessCoveragePercent = computed(() => {
+  const total = quickLinksAll.length || 1
+  return Math.max(0, Math.min(100, Math.round((quickLinks.value.length / total) * 100)))
+})
+
+const accessCoverageLabel = computed(() => `${accessCoveragePercent.value} %`)
+
+const accessCoverageStyle = computed(() => ({
+  background: `conic-gradient(var(--color-600) 0% ${accessCoveragePercent.value}%, var(--color-100) ${accessCoveragePercent.value}% 100%)`,
+}))
+
+const moduleBars = computed(() => {
+  const activePaths = new Set(quickLinks.value.map((x) => x.to))
+  const source = quickLinksAll.slice(0, 6)
+  return source.map((item) => {
+    const active = activePaths.has(item.to)
+    return {
+      key: item.to,
+      label: item.label.slice(0, 3).toUpperCase(),
+      height: active ? 92 : 24,
+    }
+  })
+})
+
+// Dashboard admin en mode "liens rapides" uniquement : pas d'appels API au montage.
 </script>
 
 <style scoped>
 @keyframes admin-dash-in {
   from {
-    opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(10px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
   }
 }
 
 .admin-dash-enter {
-  opacity: 0;
-  animation: admin-dash-in 0.52s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: admin-dash-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-dash-enter {
+    animation: none;
+  }
 }
 </style>

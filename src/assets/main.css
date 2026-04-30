@@ -296,6 +296,25 @@ layer(base);
     @apply overflow-hidden rounded-xl border border-primary-100 bg-white shadow-md transition-shadow duration-200 hover:shadow-lg;
     @apply dark:border-primary-800/60 dark:bg-primary-950/70 dark:shadow-none dark:hover:shadow-none;
   }
+  .dashboard-hero {
+    background: linear-gradient(135deg, var(--color-500), var(--color-800));
+    @apply relative overflow-hidden rounded-2xl p-4 text-white shadow-lg sm:p-6;
+  }
+  .dashboard-kpi-card {
+    @apply rounded-xl border border-primary-100/80 bg-white p-4 shadow-sm transition hover:shadow-md;
+    @apply dark:border-primary-800/60 dark:bg-primary-950/65 dark:shadow-none;
+  }
+  .dashboard-kpi-card-accent {
+    background: linear-gradient(160deg, var(--color-600), var(--color-800));
+    @apply border-transparent text-white;
+  }
+  .dashboard-panel-soft {
+    @apply rounded-xl border border-primary-100/80 bg-white/95 p-4 shadow-sm;
+    @apply dark:border-primary-800/60 dark:bg-primary-950/60 dark:shadow-none;
+  }
+  .dashboard-chip {
+    @apply inline-flex rounded-full bg-white/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-white/95;
+  }
   .rusa-settings-shell {
     @apply overflow-visible rounded-xl border border-primary-100 bg-white shadow-md;
     @apply dark:border-primary-800/60 dark:bg-primary-950/70 dark:shadow-none;
@@ -892,4 +911,35 @@ span.flatpickr-weekday,
 /* SweetAlert2 au-dessus du header (z-[99999]), menus header et overlays modales (jusqu’à ~500000) */
 .swal2-container {
   z-index: 600000 !important;
+}
+
+/* Mobile: force table responsiveness globally */
+@media (max-width: 767px) {
+  /* Universal mobile table responsiveness */
+  table {
+    display: block;
+    width: 100% !important;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  thead,
+  tbody,
+  tr {
+    white-space: nowrap;
+  }
+
+  .rusa-panel .overflow-x-auto,
+  .rusa-card .overflow-x-auto {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .rusa-panel table,
+  .rusa-card table,
+  .overflow-x-auto table {
+    min-width: 640px;
+  }
 }

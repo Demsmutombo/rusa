@@ -40,27 +40,31 @@ export const SIDEBAR_SUPERADMIN_SOCIETES_NAV = true
 export const SIDEBAR_ADMIN_ENABLED_KEYS = [
   'dashboard',
   'agents',
+  'billets',
+  'buses',
+  'bus-types',
   'clients',
   'destinations',
-  'buses',
-  'bus-types',
-  'voyages',
+  'paiements',
   'reservations',
-  'billets',
+  'users',
+  'voyages',
 ]
 
-/** Menu gérant : inchangé côté clés (opérations / admin paths), filtré séparément. */
+/** Menu gérant : clés dans l’ordre des ressources permissions (Facture / Société avant Paiement, etc.). */
 const SIDEBAR_GERANT_ENABLED_KEYS = [
   'dashboard',
-  'trips',
-  'voyages',
-  'reservations',
-  'billets',
   'agents',
-  'destinations',
+  'billets',
   'buses',
   'bus-types',
-  'transporteurs',
+  'clients',
+  'destinations',
+  'gerant-indicateurs',
+  'paiements',
+  'reservations',
+  'users',
+  'voyages',
 ]
 
 /** @type {Record<string, string[] | null>} */
@@ -72,6 +76,59 @@ export const SIDEBAR_PATHS_WHITELIST = {
   caissier: null,
   transporteur: null,
   client: null,
+}
+
+/**
+ * Ordre des préfixes de ressource tel que renvoyé par le JWT (ex. rôle Gerant) — réf. API RusaTravel.
+ * Sert à trier les entrées de menu par domaine métier cohérent avec `permissions[]`.
+ */
+export const API_PERMISSION_RESOURCE_ORDER = [
+  'Agent',
+  'Billet',
+  'Bus',
+  'CategorieClient',
+  'Client',
+  'CommunicationCampaign',
+  'Destination',
+  'Facture',
+  'Paiement',
+  'PlainteClient',
+  'Reservation',
+  'Societe',
+  'TypeBuse',
+  'Utilisateur',
+  'Voyage',
+]
+
+/**
+ * @param {string[] | null | undefined} requiredPermissions
+ * @returns {number} indice minimal dans {@link API_PERMISSION_RESOURCE_ORDER}, ou grand nombre si inconnu
+ */
+export function minResourceRankFromPermissions(requiredPermissions) {
+  if (!Array.isArray(requiredPermissions) || requiredPermissions.length === 0) return 9999
+  let min = 9999
+  for (const p of requiredPermissions) {
+    const resource = String(p).split('.')[0]
+    const i = API_PERMISSION_RESOURCE_ORDER.indexOf(resource)
+    if (i !== -1 && i < min) min = i
+  }
+  return min === 9999 ? 9999 : min
+}
+
+/**
+ * Trie les entrées de menu (sous-éléments Indicateurs, etc.) selon l’ordre des ressources API.
+ * En cas d’égalité : ordre alphabétique du libellé (FR).
+ * @param {Array<{ name?: string, path?: string, requiredPermissions?: string[] }>} items
+ */
+export function sortMenuItemsByApiResourceOrder(items) {
+  return [...items].sort((a, b) => {
+    const ra = minResourceRankFromPermissions(a.requiredPermissions)
+    const rb = minResourceRankFromPermissions(b.requiredPermissions)
+    if (ra !== rb) return ra - rb
+    const na = String(a.name ?? a.path ?? '')
+    const nb = String(b.name ?? b.path ?? '')
+    return na.localeCompare(nb, 'fr', { sensitivity: 'base' })
+  })
 }
 
 /**
@@ -125,8 +182,11 @@ export function filterMenuGroupsByWhitelist(groups, role) {
  * @param {SidebarMenuContext} ctx
  */
 function passesItemGate(item, ctx) {
-  /** Rôle `admin` : masquer les entrées dont la liste API (JWT) ne contient aucune des clés requises. */
-  if (item.requiredPermissions?.length && ctx.role === 'admin') {
+  /**
+   * Entrées avec `requiredPermissions` : visibles seulement si le JWT en contient au moins une
+   * (admin, gérant, financier, caissier, super-admin sur menu admin, etc.).
+   */
+  if (item.requiredPermissions?.length) {
     const ok = item.requiredPermissions.some((k) => ctx.hasPermission(k))
     if (!ok) return false
   }
@@ -182,19 +242,20 @@ function makeBusNavItem(opts) {
   const busesPath = `${basePath}/buses`
   const extra = requiredModule ? { requiredModule } : {}
 
+  /** Bus avant TypeBuse dans le JWT (`Bus.*` puis plus loin `TypeBuse.*`). */
   const subItems = []
-  if (hasTypes) {
-    subItems.push({
-      name: 'Types de bus',
-      path: typesPath,
-      requiredPermissions: PERM.busTypes,
-    })
-  }
   if (hasBuses) {
     subItems.push({
       name: 'Bus',
       path: busesPath,
       requiredPermissions: PERM.buses,
+    })
+  }
+  if (hasTypes) {
+    subItems.push({
+      name: 'Types de bus',
+      path: typesPath,
+      requiredPermissions: PERM.busTypes,
     })
   }
 
@@ -224,36 +285,65 @@ function makeBusNavItem(opts) {
 function buildSuperAdminMinimal(ctx) {
   const all = [
     { key: 'dashboard', icon: LayoutDashboardIcon, name: ctx.t('dashboard'), path: '/super-admin' },
-    { key: 'agents', icon: UserCircleIcon, name: 'Agents', path: '/admin/agents' },
-    { key: 'clients', icon: UserGroupIcon, name: 'Clients', path: '/super-admin/clients' },
-    { key: 'destinations', icon: PageIcon, name: 'Destinations', path: '/super-admin/destinations' },
+    {
+      key: 'agents',
+      icon: UserCircleIcon,
+      name: 'Agents',
+      path: '/admin/agents',
+      requiredPermissions: PERM.agents,
+    },
+    {
+      key: 'clients',
+      icon: UserGroupIcon,
+      name: 'Clients',
+      path: '/super-admin/clients',
+      requiredPermissions: PERM.clients,
+    },
+    {
+      key: 'destinations',
+      icon: PageIcon,
+      name: 'Destinations',
+      path: '/super-admin/destinations',
+      requiredPermissions: PERM.destinations,
+    },
   ]
   const enabled = new Set(SIDEBAR_ADMIN_ENABLED_KEYS)
   const busNav = makeBusNavItem({ enabled, basePath: '/super-admin' })
-  const voyageRow = {
-    key: 'voyages',
-    icon: Calendar2Line,
-    name: 'Voyages',
-    path: '/super-admin/voyages',
+  const paiementsRow = {
+    key: 'paiements',
+    icon: ErrorIcon,
+    name: 'Paiements',
+    path: '/admin/payments',
+    requiredPermissions: PERM.paiements,
   }
   const reservationsRow = {
     key: 'reservations',
     icon: ListIcon,
     name: 'Réservations',
     path: '/admin/reservations',
+    requiredPermissions: PERM.reservations,
   }
   const billetsRow = {
     key: 'billets',
     icon: DocsIcon,
     name: 'Billets',
     path: '/admin/billets',
+    requiredPermissions: PERM.billets,
+  }
+  const voyageRow = {
+    key: 'voyages',
+    icon: Calendar2Line,
+    name: 'Voyages',
+    path: '/super-admin/voyages',
+    requiredPermissions: PERM.voyages,
   }
   const items = [
     ...all.filter((row) => enabled.has(row.key)).map(({ key: _k, ...rest }) => rest),
     ...(busNav ? [(({ key: _k, ...rest }) => rest)(busNav)] : []),
-    ...(enabled.has('voyages') ? [(({ key: _k, ...rest }) => rest)(voyageRow)] : []),
+    ...(enabled.has('paiements') ? [(({ key: _k, ...rest }) => rest)(paiementsRow)] : []),
     ...(enabled.has('reservations') ? [(({ key: _k, ...rest }) => rest)(reservationsRow)] : []),
     ...(enabled.has('billets') ? [(({ key: _k, ...rest }) => rest)(billetsRow)] : []),
+    ...(enabled.has('voyages') ? [(({ key: _k, ...rest }) => rest)(voyageRow)] : []),
   ]
   return [{ title: 'Super-Admin', items }]
 }
@@ -281,6 +371,20 @@ function buildAdminModuleMenu(ctx) {
       requiredPermissions: PERM.agents,
     },
     {
+      key: 'billets',
+      icon: DocsIcon,
+      name: 'Billets',
+      path: '/admin/billets',
+      requiredPermissions: PERM.billets,
+    },
+  ]
+
+  const enabled = new Set(SIDEBAR_ADMIN_ENABLED_KEYS)
+  const busNav = makeBusNavItem({ enabled, basePath })
+  if (busNav) candidates.push(busNav)
+
+  candidates.push(
+    {
       key: 'clients',
       icon: UserGroupIcon,
       name: 'Clients',
@@ -294,35 +398,35 @@ function buildAdminModuleMenu(ctx) {
       path: isSa ? `${basePath}/destinations` : '/admin/destinations',
       requiredPermissions: PERM.destinations,
     },
-  ]
-
-  const enabled = new Set(SIDEBAR_ADMIN_ENABLED_KEYS)
-  const busNav = makeBusNavItem({ enabled, basePath })
-  if (busNav) candidates.push(busNav)
-
-  candidates.push({
-    key: 'voyages',
-    icon: Calendar2Line,
-    name: 'Voyages',
-    path: isSa ? `${basePath}/voyages` : '/admin/voyages',
-    requiredPermissions: PERM.voyages,
-  })
-
-  candidates.push({
-    key: 'reservations',
-    icon: ListIcon,
-    name: 'Réservations',
-    path: '/admin/reservations',
-    requiredPermissions: PERM.reservations,
-  })
-
-  candidates.push({
-    key: 'billets',
-    icon: DocsIcon,
-    name: 'Billets',
-    path: '/admin/billets',
-    requiredPermissions: PERM.billets,
-  })
+    {
+      key: 'paiements',
+      icon: ErrorIcon,
+      name: 'Paiements',
+      path: '/admin/payments',
+      requiredPermissions: PERM.paiements,
+    },
+    {
+      key: 'reservations',
+      icon: ListIcon,
+      name: 'Réservations',
+      path: '/admin/reservations',
+      requiredPermissions: PERM.reservations,
+    },
+    {
+      key: 'voyages',
+      icon: Calendar2Line,
+      name: 'Voyages',
+      path: isSa ? `${basePath}/voyages` : '/admin/voyages',
+      requiredPermissions: PERM.voyages,
+    },
+    {
+      key: 'users',
+      icon: ListIcon,
+      name: 'Utilisateurs',
+      path: '/admin/users',
+      requiredPermissions: PERM.utilisateurs,
+    },
+  )
 
   const items = candidates
     .filter((row) => {
@@ -331,36 +435,88 @@ function buildAdminModuleMenu(ctx) {
     })
     .map(({ key: _k, ...rest }) => rest)
 
-  return [{ title, items }]
+  const pick = (pred) => items.filter(pred)
+
+  const dashboardItems = pick((it) => it.path === dash)
+  const byPathOrName = (path, name) =>
+    items.find((it) => (path ? it.path === path : false) || (name ? it.name === name : false)) || null
+
+  const gestion = [
+    byPathOrName('/admin/agents'),
+    byPathOrName('/admin/destinations'),
+    byPathOrName('/admin/bus-types'),
+    byPathOrName('/admin/buses', 'Bus'),
+  ].filter(Boolean)
+  const exploitation = [byPathOrName('/admin/voyages'), byPathOrName('/admin/reservations')].filter(Boolean)
+  const finance = [byPathOrName('/admin/payments'), byPathOrName('/admin/billets')].filter(Boolean)
+
+  const used = new Set([
+    ...dashboardItems.map((it) => it.path || it.name),
+    ...gestion.map((it) => it.path || it.name),
+    ...exploitation.map((it) => it.path || it.name),
+    ...finance.map((it) => it.path || it.name),
+  ])
+  const autres = items.filter((it) => !used.has(it.path || it.name))
+
+  const groups = []
+  if (dashboardItems.length) groups.push({ title, items: dashboardItems })
+  if (gestion.length) groups.push({ title: 'Gestion', items: gestion })
+  if (exploitation.length) groups.push({ title: 'Exploitation', items: exploitation })
+  if (finance.length) groups.push({ title: 'Finance', items: finance })
+  if (autres.length) groups.push({ title: 'Autres', items: autres })
+
+  return groups
 }
 
 /** @param {SidebarMenuContext} ctx */
 function buildGerantMenu(ctx) {
+  const gerantIndicateursSubItems = sortMenuItemsByApiResourceOrder([
+    {
+      name: 'Société & finances',
+      path: '/gerant/indicateurs/societe',
+      requiredPermissions: [...PERM.societes, ...PERM.factures],
+    },
+    {
+      name: 'Clients',
+      path: '/gerant/indicateurs/clients',
+      requiredPermissions: [...PERM.clients, ...PERM.categoriesClient],
+    },
+    {
+      name: 'Top 5 — CA',
+      path: '/gerant/indicateurs/top-ca',
+      requiredPermissions: [...PERM.clients, ...PERM.factures],
+    },
+    {
+      name: 'Top 5 — arriérés',
+      path: '/gerant/indicateurs/top-arrieres',
+      requiredPermissions: [...PERM.clients, ...PERM.factures],
+    },
+    {
+      name: 'Alertes société',
+      path: '/gerant/indicateurs/alertes',
+      requiredPermissions: [...PERM.societes, ...PERM.clients],
+    },
+    {
+      name: 'Tendances',
+      path: '/gerant/indicateurs/tendances',
+      requiredPermissions: [...PERM.factures, ...PERM.reservations, ...PERM.clients],
+    },
+    {
+      name: 'Statistiques paiements',
+      path: '/gerant/indicateurs/paiements',
+      requiredPermissions: PERM.paiements,
+    },
+  ])
+
   const candidates = [
     { key: 'dashboard', icon: LayoutDashboardIcon, name: 'Dashboard', path: '/gerant' },
     {
-      key: 'trips',
-      icon: HomeIcon,
-      name: 'Trajets',
-      path: '/admin/trips',
+      key: 'agents',
+      icon: UserCircleIcon,
+      name: 'Agents',
+      path: '/admin/agents',
       requiredModule: 'operations',
-      requiredPermissions: PERM.trips,
-    },
-    {
-      key: 'voyages',
-      icon: Calendar2Line,
-      name: 'Voyages',
-      path: '/admin/voyages',
-      requiredModule: 'operations',
-      requiredPermissions: PERM.voyages,
-    },
-    {
-      key: 'reservations',
-      icon: Calendar2Line,
-      name: 'Réservations',
-      path: '/admin/reservations',
-      requiredModule: 'operations',
-      requiredPermissions: PERM.reservations,
+      requiredPermissions: PERM.agents,
     },
     {
       key: 'billets',
@@ -371,12 +527,12 @@ function buildGerantMenu(ctx) {
       requiredPermissions: PERM.billets,
     },
     {
-      key: 'agents',
-      icon: UserCircleIcon,
-      name: 'Agents',
-      path: '/admin/agents',
+      key: 'clients',
+      icon: UserGroupIcon,
+      name: 'Clients',
+      path: '/admin/clients',
       requiredModule: 'operations',
-      requiredPermissions: PERM.agents,
+      requiredPermissions: PERM.clients,
     },
     {
       key: 'destinations',
@@ -387,12 +543,43 @@ function buildGerantMenu(ctx) {
       requiredPermissions: PERM.destinations,
     },
     {
-      key: 'transporteurs',
-      icon: UserCircleIcon,
-      name: 'Transporteurs',
-      path: '/admin/transporteurs',
+      key: 'gerant-indicateurs',
+      icon: BarChartIcon,
+      name: 'Indicateurs',
       requiredModule: 'operations',
-      requiredPermissions: PERM.transporteurs,
+      subItems: gerantIndicateursSubItems,
+    },
+    {
+      key: 'paiements',
+      icon: ErrorIcon,
+      name: 'Paiements',
+      path: '/admin/payments',
+      requiredModule: 'operations',
+      requiredPermissions: PERM.paiements,
+    },
+    {
+      key: 'reservations',
+      icon: ListIcon,
+      name: 'Réservations',
+      path: '/admin/reservations',
+      requiredModule: 'operations',
+      requiredPermissions: PERM.reservations,
+    },
+    {
+      key: 'voyages',
+      icon: Calendar2Line,
+      name: 'Voyages',
+      path: '/admin/voyages',
+      requiredModule: 'operations',
+      requiredPermissions: PERM.voyages,
+    },
+    {
+      key: 'users',
+      icon: ListIcon,
+      name: 'Utilisateurs',
+      path: '/admin/users',
+      requiredModule: 'operations',
+      requiredPermissions: PERM.utilisateurs,
     },
   ]
   const enabled = new Set(SIDEBAR_GERANT_ENABLED_KEYS)
@@ -401,19 +588,49 @@ function buildGerantMenu(ctx) {
     basePath: '/admin',
     requiredModule: 'operations',
   })
+  const billetsIdx = candidates.findIndex((r) => r.key === 'billets')
   if (busNav) {
-    const voyIdx = candidates.findIndex((r) => r.key === 'voyages')
-    if (voyIdx === -1) candidates.push(busNav)
-    else candidates.splice(voyIdx, 0, busNav)
+    if (billetsIdx === -1) candidates.push(busNav)
+    else candidates.splice(billetsIdx + 1, 0, busNav)
   }
 
   const items = candidates
     .filter((row) => {
-      if (row.subItems?.length) return enabled.has('bus-types') || enabled.has('buses')
+      if (row.subItems?.length) {
+        if (row.key === 'gerant-indicateurs') return enabled.has('gerant-indicateurs')
+        return enabled.has('bus-types') || enabled.has('buses')
+      }
       return enabled.has(row.key)
     })
     .map(({ key: _k, ...rest }) => rest)
-  return [{ title: 'Menu Manager Général', items }]
+  const dashboardItems = items.filter((it) => it.path === '/gerant')
+  const byPathOrName = (path, name) =>
+    items.find((it) => (path ? it.path === path : false) || (name ? it.name === name : false)) || null
+
+  const gestion = [
+    byPathOrName('/admin/agents'),
+    byPathOrName('/admin/destinations'),
+    byPathOrName('/admin/bus-types'),
+    byPathOrName('/admin/buses', 'Bus'),
+  ].filter(Boolean)
+  const exploitation = [byPathOrName('/admin/voyages'), byPathOrName('/admin/reservations')].filter(Boolean)
+  const finance = [byPathOrName('/admin/payments'), byPathOrName('/admin/billets')].filter(Boolean)
+
+  const used = new Set([
+    ...dashboardItems.map((it) => it.path || it.name),
+    ...gestion.map((it) => it.path || it.name),
+    ...exploitation.map((it) => it.path || it.name),
+    ...finance.map((it) => it.path || it.name),
+  ])
+  const autres = items.filter((it) => !used.has(it.path || it.name))
+
+  const groups = []
+  if (dashboardItems.length) groups.push({ title: 'Menu Manager Général', items: dashboardItems })
+  if (gestion.length) groups.push({ title: 'Gestion', items: gestion })
+  if (exploitation.length) groups.push({ title: 'Exploitation', items: exploitation })
+  if (finance.length) groups.push({ title: 'Finance', items: finance })
+  if (autres.length) groups.push({ title: 'Autres', items: autres })
+  return groups
 }
 
 /** @param {SidebarMenuContext} ctx */
@@ -482,6 +699,7 @@ function buildClientMenu(ctx) {
         { icon: HomeIcon, name: 'Recherche de trajets', path: '/client/search' },
         { icon: Calendar2Line, name: 'Mes réservations', path: '/client/reservations' },
         { icon: ErrorIcon, name: 'Paiements', path: '/client/payments' },
+        { icon: DocsIcon, name: 'Mes billets', path: '/client/billets' },
         { icon: UserCircleIcon, name: 'Profil', path: '/client/profile' },
         { icon: SettingsIcon, name: 'Paramètres', path: '/client/settings' },
       ],
@@ -586,19 +804,24 @@ export function buildSidebarMenuGroups(rawCtx) {
 
   let groups
 
-  if (
+  /**
+   * Gérant / financier / caissier : menus dédiés en premier.
+   * Sinon `userHasAdminModuleAccess` inclut ces rôles pour l’accès routes `/admin/*`,
+   * mais la sidebar ne doit pas leur afficher le menu « administrateur » complet.
+   */
+  if (userRole === 'gerant') {
+    groups = buildGerantMenu(ctx)
+  } else if (userRole === 'financier') {
+    groups = buildFinancierMenu(ctx)
+  } else if (userRole === 'caissier') {
+    groups = buildCaissierMenu(ctx)
+  } else if (
     ctx.userHasAdminModuleAccess(
       { role: userRole, user: ctx.user },
       ctx.roleCatalogActiveRoles || []
     )
   ) {
     groups = buildAdminModuleMenu(ctx)
-  } else if (userRole === 'gerant') {
-    groups = buildGerantMenu(ctx)
-  } else if (userRole === 'financier') {
-    groups = buildFinancierMenu(ctx)
-  } else if (userRole === 'caissier') {
-    groups = buildCaissierMenu(ctx)
   } else if (userRole === 'transporteur') {
     groups = buildTransporteurMenu(ctx)
   } else if (userRole === 'client') {

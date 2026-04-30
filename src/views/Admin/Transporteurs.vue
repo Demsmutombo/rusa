@@ -202,7 +202,7 @@
                     @click="deleteTransporteur(transporteur)"
                     class="text-red-600 hover:text-red-900"
                   >
-                    Supprimer
+                    Désactivé
                   </button>
                 </td>
               </tr>

@@ -5,7 +5,7 @@
     <ClientDashboardView v-else-if="isClient" />
     <div
       v-else
-      class="flex min-h-[40vh] flex-1 flex-col items-center justify-center px-4 text-center text-sm text-gray-500 dark:text-primary-400/80"
+      class="dashboard-panel-soft flex min-h-[40vh] flex-1 flex-col items-center justify-center px-4 text-center text-sm text-gray-500 dark:text-primary-400/80"
     >
       <p class="max-w-md text-gray-700 dark:text-primary-200/90">
         {{ staffIntro }}
@@ -23,10 +23,9 @@ import ClientDashboardView from './ClientDashboardView.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const authStore = useAuthStore()
-const isSuperAdmin = computed(() => authStore.role === 'superadmin')
-const isAdmin = computed(() => authStore.role === 'admin')
+const isSuperAdmin = computed(() => String(authStore.role || '').toLowerCase() === 'superadmin')
+const isAdmin = computed(() => String(authStore.role || '').toLowerCase() === 'admin')
 const isClient = computed(() => String(authStore.role || '').toLowerCase() === 'client')
-
 function firstNameFromUser(u) {
   const full = String(u?.nomComplet || u?.NomComplet || '').trim()
   if (!full) return ''
@@ -36,6 +35,13 @@ function firstNameFromUser(u) {
 const staffIntro = computed(() => {
   const first = firstNameFromUser(authStore.user)
   const greet = first ? `${first}, ` : ''
-  return `${greet}bienvenue — vos modules sont accessibles dans le menu.`
+  const role = String(authStore.role || '').toLowerCase()
+  const hints = {
+    financier: 'suivi financier et paiements via le menu latéral.',
+    caissier: 'encaissements et paiements via le menu latéral.',
+    transporteur: 'flotte, trajets et réservations via le menu latéral.',
+  }
+  const tail = hints[role] || 'vos modules sont accessibles dans le menu.'
+  return `${greet}bienvenue — ${tail}`
 })
 </script>

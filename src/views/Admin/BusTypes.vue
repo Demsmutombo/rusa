@@ -133,7 +133,7 @@
                       class="transition disabled:opacity-50"
                       @click="toggleStatut(r)"
                     >
-                      {{ rowStatut(r) ? 'Supprimer' : 'Réactiver' }}
+                      {{ rowStatut(r) ? 'Désactivé' : 'Réactiver' }}
                     </button>
                   </td>
                 </tr>
@@ -182,7 +182,7 @@
                   "
                   @click="toggleStatut(r)"
                 >
-                  {{ rowStatut(r) ? 'Supprimer' : 'Réactiver' }}
+                  {{ rowStatut(r) ? 'Désactivé' : 'Réactiver' }}
                 </button>
               </div>
             </article>
@@ -394,7 +394,7 @@ async function toggleStatut(r) {
   const id = r.idTypeBus ?? r.IdTypeBus
   const label = r.libelle ?? r.Libelle ?? `#${id}`
   const wasActive = rowStatut(r)
-  const verb = wasActive ? 'supprimer' : 'réactiver'
+  const verb = wasActive ? 'désactiver' : 'réactiver'
   const ok = await notify.confirm(`Voulez-vous ${verb} le type « ${label} » ?`, 'Confirmation')
   if (!ok) return
   togglingId.value = id

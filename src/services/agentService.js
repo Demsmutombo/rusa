@@ -7,13 +7,9 @@ import { resolveApiUrl } from '@/config/apiOrigin'
 import { slugifyRoleName } from '@/config/roles'
 import { useAuthStore } from '@/stores/auth'
 import { assertRowBelongsToUserSociete, scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
+import { API_ENDPOINTS } from './Endpoint.service'
 import { apiGet, apiPost, apiPut } from './apiService'
 
-const JSON_ACCEPT = {
-  headers: {
-    Accept: 'text/plain, application/json;q=0.9, */*;q=0.8',
-  },
-}
 
 /** URL absolue pour afficher `photoUrl` (chemins relatifs préfixés avec l’origine API). */
 export function resolveAgentPhotoUrl(photoUrl) {
@@ -245,13 +241,13 @@ export function normalizeAgentUpdate(input) {
 /** Suffixe query pour GET /api/Agent (ex. `tous=true` si le backend liste aussi les inactifs). */
 function agentCollectionPath() {
   const extra = String(import.meta.env.VITE_API_AGENT_LIST_QUERY || '').trim()
-  if (!extra) return '/api/Agent'
+  if (!extra) return API_ENDPOINTS.AGENT.BASE
   const qs = extra.startsWith('?') ? extra.slice(1) : extra
-  return `/api/Agent?${qs}`
+  return `${API_ENDPOINTS.AGENT.BASE}?${qs}`
 }
 
 export function listAgents() {
-  return apiGet(agentCollectionPath(), JSON_ACCEPT)
+  return apiGet(agentCollectionPath())
 }
 
 export async function listAgentsArray() {
@@ -270,7 +266,7 @@ export async function listAgentsArray() {
 }
 
 export function getAgent(id) {
-  return apiGet(`/api/Agent/${id}`, JSON_ACCEPT)
+  return apiGet(API_ENDPOINTS.AGENT.byId(id))
 }
 
 /** GET /api/Agent/{id} → objet agent normalisé ou `null`. */
@@ -296,7 +292,7 @@ export function toggleAgentStatut(id) {
   if (!Number.isFinite(nid) || nid <= 0) {
     return Promise.reject(new Error('Identifiant agent invalide.'))
   }
-  return apiPut(`/api/Agent/toggle-statut/${nid}`, {}, JSON_ACCEPT)
+  return apiPut(API_ENDPOINTS.AGENT.toggleStatut(nid), {})
 }
 
 /**
@@ -326,11 +322,11 @@ export async function setAgentStatut(id, actif, listRow = null) {
 }
 
 export function createAgent(body) {
-  return apiPost('/api/Agent', normalizeAgentCreate(body))
+  return apiPost(API_ENDPOINTS.AGENT.BASE, normalizeAgentCreate(body))
 }
 
 export function updateAgent(id, body) {
-  return apiPut(`/api/Agent/${id}`, normalizeAgentUpdate(body))
+  return apiPut(API_ENDPOINTS.AGENT.byId(id), normalizeAgentUpdate(body))
 }
 
 /** Filtre côté client par société (si le GET ne supporte pas de query) */

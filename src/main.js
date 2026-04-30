@@ -32,9 +32,15 @@ localeStore.setLocale('fr')
 
 app.mount('#app')
 
-// Session ouverte : aller au tableau de bord du rôle ; sinon écran d’accueil animé
-if (authStore.isAuthenticated) {
-  router.replace(getDashboardPath(authStore.role || 'client'))
-} else {
-  router.replace('/splash')
-}
+// Ne pas écraser la route courante au refresh.
+// Rediriger seulement sur la racine.
+router.isReady().then(() => {
+  const currentPath = router.currentRoute.value.path || '/'
+  if (currentPath !== '/') return
+
+  if (authStore.isAuthenticated) {
+    router.replace(getDashboardPath(authStore.role || 'client'))
+  } else {
+    router.replace('/splash')
+  }
+})

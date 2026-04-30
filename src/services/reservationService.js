@@ -7,14 +7,10 @@
 import { useAuthStore } from '@/stores/auth'
 import { sessionHintsFromJwt } from '@/utils/jwtClaims'
 import { scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
+import { API_ENDPOINTS, API_USE_GUIDE_ROUTES } from './Endpoint.service'
 import { apiGet, apiPost, apiPut } from './apiService'
 import { ticksToHHmm } from './voyageService'
 
-const JSON_ACCEPT = {
-  headers: {
-    Accept: 'text/plain, application/json;q=0.9, */*;q=0.8',
-  },
-}
 
 /**
  * Valeurs autorisées côté API pour `statutReservation` (enum backend).
@@ -38,7 +34,10 @@ export const RESERVATION_STATUT_SELECT_OPTIONS = [
 export function unwrapReservationList(data) {
   if (data == null) return []
   if (Array.isArray(data)) return data
-  const arr = data.data ?? data.items ?? data.results ?? data.value ?? []
+  if (Array.isArray(data.data)) return data.data
+  const nested = data.data && typeof data.data === 'object' ? data.data : null
+  if (nested && Array.isArray(nested.data)) return nested.data
+  const arr = data.items ?? data.results ?? data.value ?? []
   return Array.isArray(arr) ? arr : []
 }
 
@@ -47,12 +46,34 @@ export function unwrapReservationList(data) {
  */
 export async function listReservationsArray() {
   const auth = useAuthStore()
-  const raw = await apiGet('/api/Reservation', JSON_ACCEPT)
+  const raw = await apiGet(API_ENDPOINTS.RESERVATION.LIST)
   let list = unwrapReservationList(raw)
   if (auth.role !== 'superadmin') {
     list = scopeEntitiesToUserSociete(list, { role: auth.role, societeId: auth.societeId })
   }
   return list
+}
+
+/**
+ * @param {number|string} idClient
+ * @returns {Promise<object[]>}
+ */
+export function listReservationsByClient(idClient) {
+  const nid = Number(idClient)
+  if (!Number.isFinite(nid) || nid <= 0) return Promise.resolve([])
+  return apiGet(API_ENDPOINTS.RESERVATION.byClient(nid)).then(unwrapReservationList)
+}
+
+/**
+ * @param {number|string} idUtilisateur
+ * @param {number|string} idClient
+ * @returns {Promise<object[]>}
+ */
+export function listReservationsByUserAndClient(idUtilisateur, idClient) {
+  const uid = Number(idUtilisateur)
+  const cid = Number(idClient)
+  if (!Number.isFinite(uid) || uid <= 0 || !Number.isFinite(cid) || cid <= 0) return Promise.resolve([])
+  return apiGet(API_ENDPOINTS.RESERVATION.byUserAndClient(uid, cid)).then(unwrapReservationList)
 }
 
 /**
@@ -63,7 +84,7 @@ export function getReservation(id) {
   if (!Number.isFinite(nid) || nid <= 0) {
     return Promise.reject(new Error('Identifiant réservation invalide.'))
   }
-  return apiGet(`/api/Reservation/${nid}`, JSON_ACCEPT)
+  return apiGet(API_ENDPOINTS.RESERVATION.byId(nid))
 }
 
 /**
@@ -85,7 +106,86 @@ export function createReservation(body) {
   if (!Number.isFinite(uid) || uid <= 0) {
     delete payload.idUtilisateur
   }
-  return apiPost('/api/Reservation', payload, JSON_ACCEPT)
+  if (API_USE_GUIDE_ROUTES && payload.nombrePlaces != null && payload.nombreDePlace == null) {
+    payload.nombreDePlace = payload.nombrePlaces
+  }
+  return apiPost(API_ENDPOINTS.RESERVATION.CREATE, payload)
+}
+
+/**
+ * @typedef {{
+ *   idVoyage: number,
+ *   idClient: number,
+ *   nombreDePlace: number,
+ *   idSociete: number,
+ * }} ReservationWithPaiementReservationPayload
+ *
+ * @typedef {{
+ *   montantAPaye: number,
+ *   montantPaye: number,
+ *   methodePaiement: string,
+ *   referenceTransaction?: string,
+ *   idUtilisateur: number,
+ * }} ReservationWithPaiementPaiementPayload
+ *
+ * @typedef {{
+ *   reservation: ReservationWithPaiementReservationPayload,
+ *   paiement: ReservationWithPaiementPaiementPayload,
+ * }} ReservationWithPaiementRequest
+ */
+
+/**
+ * POST /api/Reservation/reservation_with_paiement
+ * Crée une réservation et son paiement dans une même transaction.
+ * @param {ReservationWithPaiementRequest} body
+ * @returns {Promise<unknown>}
+ */
+export function createReservationWithPaiement(body) {
+  return apiPost(API_ENDPOINTS.RESERVATION.CREATE_WITH_PAIEMENT, body)
+}
+
+/**
+ * @param {unknown} raw
+ * @returns {{
+ *   reservation: Record<string, unknown>,
+ *   paiement: Record<string, unknown>,
+ *   billet: Record<string, unknown> | null,
+ *   transactionId: string,
+ *   statut: string,
+ *   message: string,
+ *   dateCreation: string,
+ * }}
+ */
+export function unwrapReservationWithPaiementResponse(raw) {
+  const r = raw && typeof raw === 'object' ? /** @type {Record<string, unknown>} */ (raw) : {}
+  const reservation =
+    r.reservation && typeof r.reservation === 'object'
+      ? /** @type {Record<string, unknown>} */ (r.reservation)
+      : r.Reservation && typeof r.Reservation === 'object'
+        ? /** @type {Record<string, unknown>} */ (r.Reservation)
+        : {}
+  const paiement =
+    r.paiement && typeof r.paiement === 'object'
+      ? /** @type {Record<string, unknown>} */ (r.paiement)
+      : r.Paiement && typeof r.Paiement === 'object'
+        ? /** @type {Record<string, unknown>} */ (r.Paiement)
+        : {}
+  const billet =
+    r.billet && typeof r.billet === 'object'
+      ? /** @type {Record<string, unknown>} */ (r.billet)
+      : r.Billet && typeof r.Billet === 'object'
+        ? /** @type {Record<string, unknown>} */ (r.Billet)
+        : null
+
+  return {
+    reservation,
+    paiement,
+    billet,
+    transactionId: String(r.transactionId ?? r.TransactionId ?? ''),
+    statut: String(r.statut ?? r.Statut ?? ''),
+    message: String(r.message ?? r.Message ?? ''),
+    dateCreation: String(r.dateCreation ?? r.DateCreation ?? ''),
+  }
 }
 
 /**
@@ -97,7 +197,7 @@ export function updateReservation(id, body) {
   if (!Number.isFinite(nid) || nid <= 0) {
     return Promise.reject(new Error('Identifiant réservation invalide.'))
   }
-  return apiPut(`/api/Reservation/${nid}`, body, JSON_ACCEPT)
+  return apiPut(API_ENDPOINTS.RESERVATION.byId(nid), body)
 }
 
 function stripAccents(s) {
@@ -231,7 +331,7 @@ export function buildReservationCreateBody(params) {
    * Champs uniquement renvoyés par le GET (`dateCreation`, `nomClient`, `heureVoyage`, etc.) : ne pas les envoyer
    * sauf si le contrôleur API l’exige explicitement (sinon risque de 400/500 selon la désérialisation).
    */
-  return {
+  const row = {
     idReservation: 0,
     idUtilisateur,
     idClient,
@@ -242,6 +342,10 @@ export function buildReservationCreateBody(params) {
     idSociete,
     nombrePlaces,
   }
+  if (API_USE_GUIDE_ROUTES) {
+    row.nombreDePlace = nombrePlaces
+  }
+  return row
 }
 
 function formatDisplayDate(value) {
@@ -277,12 +381,17 @@ export function reservationRawToPutBody(raw, overrides = {}) {
   let nombrePlaces = Number(
     overrides.nombrePlaces !== undefined
       ? overrides.nombrePlaces
-      : r.nombrePlaces ?? r.NombrePlaces ?? r.nbPlaces ?? r.NbPlaces,
+      : r.nombrePlaces ??
+          r.NombrePlaces ??
+          r.nombreDePlace ??
+          r.NombreDePlace ??
+          r.nbPlaces ??
+          r.NbPlaces,
   )
   if (!Number.isFinite(nombrePlaces) || nombrePlaces < 1) nombrePlaces = 1
   nombrePlaces = Math.min(100, Math.floor(nombrePlaces))
 
-  return {
+  const out = {
     idReservation,
     idUtilisateur,
     idClient,
@@ -293,6 +402,10 @@ export function reservationRawToPutBody(raw, overrides = {}) {
     idSociete,
     nombrePlaces,
   }
+  if (API_USE_GUIDE_ROUTES) {
+    out.nombreDePlace = nombrePlaces
+  }
+  return out
 }
 
 /**
@@ -323,7 +436,16 @@ export function mapReservationFromApi(row) {
     time: ticksToHHmm(heureVoyage) || '—',
     places: Math.max(
       1,
-      Number(r.nombrePlaces ?? r.NombrePlaces ?? r.nbPlaces ?? r.NbPlaces ?? r.nombreDePlaces ?? r.NombreDePlaces) || 1,
+      Number(
+        r.nombrePlaces ??
+          r.NombrePlaces ??
+          r.nombreDePlace ??
+          r.NombreDePlace ??
+          r.nbPlaces ??
+          r.NbPlaces ??
+          r.nombreDePlaces ??
+          r.NombreDePlaces,
+      ) || 1,
     ),
     totalPrice: Number(r.prixVoyage ?? r.PrixVoyage) || 0,
     status: mapApiStatutToUi(statutReservation),

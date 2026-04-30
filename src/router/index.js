@@ -74,7 +74,9 @@ const router = createRouter({
       meta: {
         title: 'Sociétés - Super-Admin - Rusa Travel',
         requiresAuth: true,
+        adminModule: true,
         roles: ['superadmin'],
+        permissions: PERM.societes,
       },
     },
     {
@@ -88,7 +90,9 @@ const router = createRouter({
       meta: {
         title: 'Destinations - Super-Admin - Rusa Travel',
         requiresAuth: true,
+        adminModule: true,
         roles: ['superadmin'],
+        permissions: PERM.destinations,
       },
     },
     {
@@ -98,7 +102,9 @@ const router = createRouter({
       meta: {
         title: 'Bus - Super-Admin - Rusa Travel',
         requiresAuth: true,
+        adminModule: true,
         roles: ['superadmin'],
+        permissions: PERM.buses,
       },
     },
     {
@@ -108,7 +114,9 @@ const router = createRouter({
       meta: {
         title: 'Types de bus - Super-Admin - Rusa Travel',
         requiresAuth: true,
+        adminModule: true,
         roles: ['superadmin'],
+        permissions: PERM.busTypes,
       },
     },
     {
@@ -118,7 +126,9 @@ const router = createRouter({
       meta: {
         title: 'Voyages - Super-Admin - Rusa Travel',
         requiresAuth: true,
+        adminModule: true,
         roles: ['superadmin'],
+        permissions: PERM.voyages,
       },
     },
     {
@@ -128,7 +138,9 @@ const router = createRouter({
       meta: {
         title: 'Clients - Super-Admin - Rusa Travel',
         requiresAuth: true,
+        adminModule: true,
         roles: ['superadmin'],
+        permissions: PERM.clients,
       },
     },
     {
@@ -143,13 +155,85 @@ const router = createRouter({
     },
     {
       path: '/gerant',
-      name: 'GerantDashboard',
-      component: roleDashboard,
+      component: () => import('../views/Dashboard/GerantLayout.vue'),
       meta: {
-        title: 'Dashboard Manager Général - Rusa Travel',
         requiresAuth: true,
         roles: ['gerant'],
       },
+      children: [
+        {
+          path: '',
+          name: 'GerantDashboard',
+          component: () => import('../views/Dashboard/GerantDashboardView.vue'),
+          meta: {
+            title: 'Dashboard Manager Général - Rusa Travel',
+            gerantSection: null,
+          },
+        },
+        {
+          path: 'indicateurs/societe',
+          name: 'GerantIndicateursSociete',
+          component: () => import('../views/Dashboard/GerantDashboardView.vue'),
+          meta: {
+            title: 'Société & finances — Gérant - Rusa Travel',
+            gerantSection: 'societe-finances',
+          },
+        },
+        {
+          path: 'indicateurs/clients',
+          name: 'GerantIndicateursClients',
+          component: () => import('../views/Dashboard/GerantDashboardView.vue'),
+          meta: {
+            title: 'Clients — Gérant - Rusa Travel',
+            gerantSection: 'clients',
+          },
+        },
+        {
+          path: 'indicateurs/top-ca',
+          name: 'GerantIndicateursTopCa',
+          component: () => import('../views/Dashboard/GerantDashboardView.vue'),
+          meta: {
+            title: 'Top 5 CA — Gérant - Rusa Travel',
+            gerantSection: 'top-ca',
+          },
+        },
+        {
+          path: 'indicateurs/top-arrieres',
+          name: 'GerantIndicateursTopArrieres',
+          component: () => import('../views/Dashboard/GerantDashboardView.vue'),
+          meta: {
+            title: 'Top 5 arriérés — Gérant - Rusa Travel',
+            gerantSection: 'top-arrieres',
+          },
+        },
+        {
+          path: 'indicateurs/alertes',
+          name: 'GerantIndicateursAlertes',
+          component: () => import('../views/Dashboard/GerantDashboardView.vue'),
+          meta: {
+            title: 'Alertes société — Gérant - Rusa Travel',
+            gerantSection: 'alertes',
+          },
+        },
+        {
+          path: 'indicateurs/tendances',
+          name: 'GerantIndicateursTendances',
+          component: () => import('../views/Dashboard/GerantDashboardView.vue'),
+          meta: {
+            title: 'Tendances — Gérant - Rusa Travel',
+            gerantSection: 'tendances',
+          },
+        },
+        {
+          path: 'indicateurs/paiements',
+          name: 'GerantIndicateursPaiements',
+          component: () => import('../views/Dashboard/GerantDashboardView.vue'),
+          meta: {
+            title: 'Statistiques paiements — Gérant - Rusa Travel',
+            gerantSection: 'paiements-stats',
+          },
+        },
+      ],
     },
     {
       path: '/financier',
@@ -335,17 +419,6 @@ const router = createRouter({
       },
     },
     {
-      path: '/admin/notifications',
-      name: 'AdminNotifications',
-      component: () => import('../views/Admin/Notifications.vue'),
-      meta: {
-        title: 'Notifications - Rusa Travel',
-        requiresAuth: true,
-        adminModule: true,
-        permissions: PERM.notifications,
-      },
-    },
-    {
       path: '/admin/settings',
       name: 'AdminSettings',
       component: () => import('../views/Admin/Settings.vue'),
@@ -423,7 +496,8 @@ const router = createRouter({
       meta: {
         title: 'Recherche de Trajets - Rusa Travel',
         requiresAuth: true,
-        roles: ['client']
+        roles: ['client'],
+        permissions: PERM.voyages,
       },
     },
     {
@@ -433,7 +507,8 @@ const router = createRouter({
       meta: {
         title: 'Mes Réservations - Rusa Travel',
         requiresAuth: true,
-        roles: ['client']
+        roles: ['client'],
+        permissions: PERM.reservations,
       },
     },
     {
@@ -443,7 +518,19 @@ const router = createRouter({
       meta: {
         title: 'Paiements Client - Rusa Travel',
         requiresAuth: true,
-        roles: ['client']
+        roles: ['client'],
+        permissions: PERM.paiements,
+      },
+    },
+    {
+      path: '/client/billets',
+      name: 'ClientBillets',
+      component: () => import('../views/Client/Billets.vue'),
+      meta: {
+        title: 'Mes Billets - Rusa Travel',
+        requiresAuth: true,
+        roles: ['client'],
+        permissions: PERM.billets,
       },
     },
     {
@@ -453,7 +540,8 @@ const router = createRouter({
       meta: {
         title: 'Mon Profil - Rusa Travel',
         requiresAuth: true,
-        roles: ['client']
+        roles: ['client'],
+        permissions: [...PERM.clients, ...PERM.utilisateurs],
       },
     },
     {
@@ -463,7 +551,8 @@ const router = createRouter({
       meta: {
         title: 'Paramètres Client - Rusa Travel',
         requiresAuth: true,
-        roles: ['client']
+        roles: ['client'],
+        permissions: [...PERM.settings, ...PERM.clients],
       },
     },
     {
@@ -506,6 +595,14 @@ router.beforeEach(async (to, from, next) => {
   }
   
   const roleCatalog = useRoleCatalogStore()
+  if (
+    String(authStore.role || '').toLowerCase() === 'gerant' &&
+    to.path === '/admin'
+  ) {
+    next('/gerant')
+    return
+  }
+
   const nav = verifyNavigationAccess(
     to,
     {

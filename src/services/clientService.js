@@ -5,13 +5,9 @@
 
 import { useAuthStore } from '@/stores/auth'
 import { scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
+import { API_ENDPOINTS } from './Endpoint.service'
 import { apiGet, apiPost, apiPut } from './apiService'
 
-const JSON_ACCEPT = {
-  headers: {
-    Accept: 'text/plain, application/json;q=0.9, */*;q=0.8',
-  },
-}
 
 export function unwrapClientList(data) {
   if (data == null) return []
@@ -118,8 +114,8 @@ export async function listClientsBySocietePaged(idSociete, opts = {}) {
     params.set('IncludeInactive', 'true')
   }
 
-  const path = `/api/Client/societe/${sid}/paged?${params.toString()}`
-  const raw = await apiGet(path, JSON_ACCEPT)
+  const path = `${API_ENDPOINTS.CLIENT.bySocietePaged(sid)}?${params.toString()}`
+  const raw = await apiGet(path)
   return unwrapClientPagedResponse(raw)
 }
 
@@ -135,8 +131,8 @@ export async function listClientsBySocieteRecherche(idSociete, opts = {}) {
   if (st) params.set('SearchTerm', st)
   params.set('IncludeInactive', opts.includeInactive === false ? 'false' : 'true')
   const q = params.toString()
-  const path = `/api/Client/societe/${sid}/recherche${q ? `?${q}` : ''}`
-  const raw = await apiGet(path, JSON_ACCEPT)
+  const path = `${API_ENDPOINTS.CLIENT.bySocieteSearch(sid)}${q ? `?${q}` : ''}`
+  const raw = await apiGet(path)
   return unwrapClientList(raw)
 }
 
@@ -150,8 +146,8 @@ export async function listClientsArray() {
       ? Number(auth.effectiveSocieteId)
       : Number(auth.societeId)
   const societeScoped = Number.isFinite(sid) && sid > 0
-  const path = societeScoped ? `/api/Client/societe/${sid}` : '/api/Client'
-  const raw = await apiGet(path, JSON_ACCEPT)
+  const path = societeScoped ? API_ENDPOINTS.CLIENT.bySociete(sid) : API_ENDPOINTS.CLIENT.BASE
+  const raw = await apiGet(path)
   let list = unwrapClientList(raw)
   /**
    * Si l’URL est déjà `/api/Client/societe/{id}`, le backend a filtré : ne pas refiltrer côté app
@@ -171,7 +167,7 @@ export function getClient(id) {
   if (!Number.isFinite(nid) || nid <= 0) {
     return Promise.reject(new Error('Identifiant client invalide.'))
   }
-  return apiGet(`/api/Client/${nid}`, JSON_ACCEPT)
+  return apiGet(API_ENDPOINTS.CLIENT.byId(nid))
 }
 
 /**
@@ -192,7 +188,14 @@ export function getClient(id) {
  * }} body
  */
 export function createClient(body) {
-  return apiPost('/api/Client', body, JSON_ACCEPT)
+  return apiPost(API_ENDPOINTS.CLIENT.CREATE || API_ENDPOINTS.CLIENT.BASE, body).catch((e) => {
+    const status = Number(e?.status) || 0
+    const canRetry =
+      (status === 400 || status === 404 || status === 405) &&
+      API_ENDPOINTS.CLIENT.CREATE !== API_ENDPOINTS.CLIENT.BASE
+    if (!canRetry) throw e
+    return apiPost(API_ENDPOINTS.CLIENT.BASE, body)
+  })
 }
 
 /**
@@ -204,7 +207,7 @@ export function updateClient(id, body) {
   if (!Number.isFinite(nid) || nid <= 0) {
     return Promise.reject(new Error('Identifiant client invalide.'))
   }
-  return apiPut(`/api/Client/${nid}`, body, JSON_ACCEPT)
+  return apiPut(API_ENDPOINTS.CLIENT.byId(nid), body)
 }
 
 export function toggleClientStatut(id) {
@@ -212,5 +215,18 @@ export function toggleClientStatut(id) {
   if (!Number.isFinite(nid) || nid <= 0) {
     return Promise.reject(new Error('Identifiant client invalide.'))
   }
-  return apiPut(`/api/Client/toggle-statut/${nid}`, {}, JSON_ACCEPT)
+  return apiPut(API_ENDPOINTS.CLIENT.toggleStatut(nid), {})
+}
+
+/**
+ * Set explicite du statut (contrat: PUT /api/Client/set-statut/{id}?Statut=bool)
+ * @param {number|string} id
+ * @param {boolean} statut
+ */
+export function setClientStatut(id, statut) {
+  const nid = Number(id)
+  if (!Number.isFinite(nid) || nid <= 0) {
+    return Promise.reject(new Error('Identifiant client invalide.'))
+  }
+  return apiPut(API_ENDPOINTS.CLIENT.setStatut(nid, statut), {})
 }

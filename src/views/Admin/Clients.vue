@@ -182,7 +182,7 @@
                         class="transition disabled:opacity-50"
                         @click="toggleStatut(r)"
                       >
-                        {{ rowStatut(r) ? 'Supprimer' : 'Réactiver' }}
+                        {{ rowStatut(r) ? 'Désactivé' : 'Réactiver' }}
                       </button>
                     </td>
                   </tr>
@@ -251,7 +251,7 @@
                     "
                     @click="toggleStatut(r)"
                   >
-                    {{ rowStatut(r) ? 'Supprimer' : 'Réactiver' }}
+                    {{ rowStatut(r) ? 'Désactivé' : 'Réactiver' }}
                   </button>
                 </div>
               </article>
@@ -565,6 +565,7 @@ import {
   createClient,
   updateClient,
   toggleClientStatut,
+  setClientStatut,
 } from '@/services/clientService'
 import { notify } from '@/utils/notify'
 
@@ -928,10 +929,11 @@ function mapRowToForm(o) {
 }
 
 function buildPayloadFromForm() {
-  return {
+  const payload = {
     nomClient: form.value.nomClient.trim(),
     adresseClient: form.value.adresseClient.trim(),
     telephone: form.value.telephone.trim(),
+    telephoneClient: form.value.telephone.trim(),
     emailClient: form.value.emailClient.trim(),
     genreClient: form.value.genreClient.trim(),
     statut: form.value.statut !== false,
@@ -942,6 +944,26 @@ function buildPayloadFromForm() {
     avenue: form.value.avenue.trim(),
     numero: form.value.numero.trim(),
   }
+  for (const k of Object.keys(payload)) {
+    if (typeof payload[k] === 'string' && payload[k].trim() === '') {
+      delete payload[k]
+    }
+  }
+  return payload
+}
+
+function collectValidationMessages(err) {
+  const d = err?.data && typeof err.data === 'object' ? err.data : null
+  if (!d) return []
+  const errors = d.errors && typeof d.errors === 'object' ? d.errors : null
+  if (!errors) return []
+  const out = []
+  for (const [field, msgs] of Object.entries(errors)) {
+    if (Array.isArray(msgs) && msgs.length) {
+      out.push(`${field}: ${msgs.map((m) => String(m)).join(', ')}`)
+    }
+  }
+  return out
 }
 
 async function load() {
@@ -1100,7 +1122,13 @@ async function save() {
     await load()
     await notify.toast.success(wasEditing ? 'Client modifié.' : 'Client créé.')
   } catch (e) {
-    await notify.error('Enregistrement', e?.message || 'Erreur')
+    const detail = String(e?.data?.detail || e?.data?.title || '').trim()
+    const validations = collectValidationMessages(e)
+    if (import.meta.env.DEV) {
+      console.error('[POST/PUT Client] erreur API', e?.data || e)
+    }
+    const extra = validations.length ? ` — ${validations.join(' | ')}` : detail ? ` — ${detail}` : ''
+    await notify.error('Enregistrement', `${e?.message || 'Erreur'}${extra}`)
   } finally {
     saving.value = false
   }
@@ -1110,12 +1138,12 @@ async function toggleStatut(r) {
   const id = clientId(r)
   const label = String(r.nomClient ?? r.NomClient ?? id)
   const wasActive = rowStatut(r)
-  const verb = wasActive ? 'supprimer' : 'réactiver'
+  const verb = wasActive ? 'désactiver' : 'réactiver'
   const ok = await notify.confirm(`Voulez-vous ${verb} le client « ${label} » ?`, 'Confirmation')
   if (!ok) return
   togglingId.value = id
   try {
-    await toggleClientStatut(id)
+    await setClientStatut(id, !wasActive)
     await load()
     await notify.toast.success(wasActive ? 'Client désactivé.' : 'Client réactivé.')
   } catch (e) {

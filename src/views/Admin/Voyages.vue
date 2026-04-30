@@ -164,7 +164,7 @@
                       class="transition disabled:opacity-50"
                       @click="toggleStatut(r)"
                     >
-                      {{ rowStatut(r) ? 'Supprimer' : 'Réactiver' }}
+                      {{ rowStatut(r) ? 'Désactivé' : 'Réactiver' }}
                     </button>
                   </td>
                 </tr>
@@ -244,7 +244,7 @@
                   "
                   @click="toggleStatut(r)"
                 >
-                  {{ rowStatut(r) ? 'Supprimer' : 'Réactiver' }}
+                  {{ rowStatut(r) ? 'Désactivé' : 'Réactiver' }}
                 </button>
               </div>
             </article>
@@ -835,7 +835,7 @@ async function toggleStatut(r) {
   const id = voyageId(r)
   const label = `${formatDateDepartCell(r.dateDepart ?? r.DateDepart)} ${ticksToHHmm(r.heureDepart ?? r.HeureDepart)}`
   const wasActive = rowStatut(r)
-  const verb = wasActive ? 'supprimer' : 'réactiver'
+  const verb = wasActive ? 'désactiver' : 'réactiver'
   const ok = await notify.confirm(`Voulez-vous ${verb} le voyage du ${label} ?`, 'Confirmation')
   if (!ok) return
   const sid = Number(r.idSociete ?? r.IdSociete)

@@ -8,7 +8,7 @@ export function messageIfHtmlInsteadOfJson(bodyText) {
     return (
       'Le serveur a renvoyé une page web au lieu du JSON de l’API. ' +
       'En production : créez un fichier .env.production à la racine du projet avec ' +
-      'VITE_API_ORIGIN=https://api.rusatravel.cd (origine seule, sans /api final), ' +
+      'VITE_API_ORIGIN=https://dev-rusatravel.asdc-rdc.org (origine seule, sans /api final), ' +
       'puis relancez npm run build et redéployez le dossier dist. ' +
       'Autre possibilité : configurer Apache ou nginx pour que les requêtes /api soient transmises au backend.'
     )

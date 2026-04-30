@@ -155,7 +155,7 @@
                 class="rusa-btn-error flex-1 min-w-[100px] py-2 text-sm"
                 @click="remove(s)"
               >
-                Supprimer
+                Désactivé
               </button>
             </div>
           </div>
@@ -251,7 +251,7 @@
                     class="ml-3 text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                     @click="remove(s)"
                   >
-                    Supprimer
+                    Désactivé
                   </button>
                 </td>
               </tr>
@@ -777,16 +777,16 @@ async function save() {
 
 async function remove(s) {
   const ok = await notify.confirm(
-    'La société « ' + s.nom + ' » sera supprimée. Cette action est définitive.',
-    'Supprimer la société ?'
+    'La société « ' + s.nom + ' » sera désactivée.',
+    'Désactiver la société ?'
   )
   if (!ok) return
   try {
     await deleteSociete(s.idSociete)
     await load()
-    await notify.toast.success('Société supprimée.')
+    await notify.toast.success('Société désactivée.')
   } catch (e) {
-    await notify.error('Suppression', e?.message || 'Suppression impossible.')
+    await notify.error('Désactivation', e?.message || 'Désactivation impossible.')
   }
 }
 

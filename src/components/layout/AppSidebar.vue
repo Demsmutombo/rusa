@@ -16,7 +16,7 @@
     <div
       class="shrink-0 py-8 flex justify-center"
     >
-      <router-link to="/">
+      <router-link to="/" @click="closeMobileSidebarOnNavigate">
         <img
           class="mx-auto"
           src="/images/logo/auth-logo.png"
@@ -102,6 +102,7 @@
                 <router-link
                   v-else-if="item.path"
                   :to="item.path"
+                  @click="closeMobileSidebarOnNavigate"
                   :class="[
                     'menu-item group',
                     {
@@ -141,6 +142,7 @@
                       <li v-for="subItem in item.subItems" :key="subItem.path">
                         <router-link
                           :to="subItem.path"
+                          @click="closeMobileSidebarOnNavigate"
                           :class="[
                             'menu-dropdown-item',
                             {
@@ -230,7 +232,7 @@
 </template>
 
 <script setup >
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useLocaleStore } from "@/stores/locale";
@@ -276,6 +278,12 @@ const menuGroups = computed(() =>
 
 const isActive = (path) => route.path === path;
 
+function closeMobileSidebarOnNavigate() {
+  if (window.innerWidth < 1024) {
+    isMobileOpen.value = false;
+  }
+}
+
 const toggleSubmenu = (groupIndex, itemIndex) => {
   const key = `${groupIndex}-${itemIndex}`;
   openSubmenu.value = openSubmenu.value === key ? null : key;
@@ -299,5 +307,14 @@ const endTransition = (el) => {
   const htmlEl = el ;
   htmlEl.style.height = "";
 };
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (window.innerWidth < 1024) {
+      isMobileOpen.value = false;
+    }
+  },
+);
 </script>
 

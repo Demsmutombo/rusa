@@ -11,40 +11,65 @@
         </p>
       </div>
 
+      <div
+        v-if="generatedBillet"
+        class="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-sm dark:border-emerald-800/60 dark:bg-emerald-950/30"
+      >
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p class="font-semibold text-emerald-900 dark:text-emerald-200">Billet généré avec succès</p>
+            <p class="mt-1 text-emerald-800/90 dark:text-emerald-300/90">
+              Réservation #{{ generatedBillet.idReservation || '—' }}
+              <span v-if="generatedBillet.transactionId"> · Transaction {{ generatedBillet.transactionId }}</span>
+            </p>
+            <p v-if="generatedBillet.qrCode" class="mt-1 text-xs text-emerald-700 dark:text-emerald-300/80">
+              QR: {{ generatedBillet.qrCode }}
+            </p>
+          </div>
+          <div class="flex gap-2">
+            <button
+              v-if="generatedBillet.urlBillet"
+              type="button"
+              class="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
+              @click="openGeneratedBillet"
+            >
+              Ouvrir le billet
+            </button>
+            <button
+              type="button"
+              class="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-emerald-800 ring-1 ring-emerald-300 hover:bg-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-200 dark:ring-emerald-700"
+              @click="generatedBillet = null"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Search Form -->
       <div class="rusa-card p-6">
         <form class="space-y-4" @submit.prevent="searchTrips">
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Ville de départ</label>
-              <div class="relative">
-                <input
-                  v-model="searchForm.departure"
-                  type="text"
-                  placeholder="Ex"
-                  class="w-full px-3 py-2 pl-10 border border-primary-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  required
-                />
-                <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-1.414.0L8.343 15.243a1.998 1.998 0 01-1.414-1.414L2.343 8.929a1.998 1.998 0 011.414-1.414L7.586 3.414A1.998 1.998 0 019 2l4.657 4.657a1.998 1.998 0 002.829 0l4.656-4.657z" />
-                </svg>
-              </div>
+              <select
+                v-model="searchForm.departure"
+                class="w-full rounded-xl border border-primary-100 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-primary-950 dark:text-primary-100"
+              >
+                <option value="">Toutes les villes</option>
+                <option v-for="v in departureOptions" :key="`dep-${v}`" :value="v">{{ v }}</option>
+              </select>
             </div>
             
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-1">Ville d'arrivée</label>
-              <div class="relative">
-                <input
-                  v-model="searchForm.arrival"
-                  type="text"
-                  placeholder="Ex"
-                  class="w-full px-3 py-2 pl-10 border border-primary-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  required
-                />
-                <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-1.414.0L8.343 15.243a1.998 1.998 0 01-1.414-1.414L2.343 8.929a1.998 1.998 0 011.414-1.414L7.586 3.414A1.998 1.998 0 019 2l4.657 4.657a1.998 1.998 0 002.829 0l4.656-4.657z" />
-                </svg>
-              </div>
+              <select
+                v-model="searchForm.arrival"
+                class="w-full rounded-xl border border-primary-100 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-primary-950 dark:text-primary-100"
+              >
+                <option value="">Toutes les villes</option>
+                <option v-for="v in arrivalOptionsFiltered" :key="`arr-${v}`" :value="v">{{ v }}</option>
+              </select>
             </div>
             
             <div>
@@ -52,8 +77,7 @@
               <input
                 v-model="searchForm.date"
                 type="date"
-                class="w-full px-3 py-2 border border-primary-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
-                required
+                class="w-full rounded-xl border border-primary-100 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-primary-950 dark:text-primary-100"
               />
             </div>
             
@@ -61,7 +85,7 @@
               <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de passagers</label>
               <select
                 v-model.number="searchForm.passengers"
-                class="w-full px-3 py-2 border border-primary-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+                class="w-full rounded-xl border border-primary-100 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-primary-950 dark:text-primary-100"
               >
                 <option :value="1">1 passager</option>
                 <option :value="2">2 passagers</option>
@@ -95,23 +119,34 @@
             >
               Réinitialiser
             </button>
+            <button
+              type="button"
+              class="rusa-btn-ghost !px-6 !py-3 disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="isSearching"
+              @click="showAllTrips"
+            >
+              {{ isSearching ? 'Chargement...' : 'Voir tous les trajets' }}
+            </button>
           </div>
         </form>
+        <p class="mt-2 text-xs text-gray-500 dark:text-primary-300/80">
+          Astuce: vous pouvez rechercher seulement par départ/arrivée sans choisir de date.
+        </p>
       </div>
 
       <!-- Search Results -->
-      <div v-if="searchResults.length > 0 || hasSearched" class="space-y-4">
+      <div v-if="searchResults.length > 0 || hasSearched || allTrips.length" class="space-y-4">
         <div class="rusa-gradient-header !p-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 class="text-xl font-semibold text-white">
-            Résultats de recherche
-            <span v-if="searchResults.length > 0" class="text-sm text-primary-100">
-              ({{ searchResults.length }} trajet(s) trouvé(s))
+            {{ hasSearched ? 'Résultats de recherche' : 'Trajets disponibles' }}
+            <span v-if="displayTrips.length > 0" class="text-sm text-primary-100">
+              ({{ displayTrips.length }} trajet(s) trouvé(s))
             </span>
           </h2>
           <div class="flex items-center space-x-4">
             <select
               v-model="sortBy"
-              class="px-3 py-2 border border-primary-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
+              class="rounded-xl border border-white/50 bg-white/95 px-3 py-2 text-sm font-medium text-primary-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-white"
             >
               <option value="price">Prix croissant</option>
               <option value="price-desc">Prix décroissant</option>
@@ -121,7 +156,7 @@
           </div>
         </div>
 
-        <div v-if="searchResults.length === 0 && hasSearched" class="text-center py-12">
+        <div v-if="displayTrips.length === 0 && hasSearched" class="text-center py-12">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -131,77 +166,48 @@
           </p>
         </div>
 
-        <div v-else class="space-y-4">
-          <div
-            v-for="trip in sortedResults"
-            :key="trip.id"
-            class="rusa-panel"
-          >
-            <div class="p-6">
-              <div class="flex items-center justify-between">
-                <div class="flex-1">
-                  <div class="flex items-center space-x-4 mb-4">
-                    <div>
-                      <p class="text-lg font-semibold text-gray-900">{{ trip.departure }}</p>
-                      <p class="text-sm text-gray-500">{{ trip.departureTime }}</p>
-                    </div>
-                    <div class="flex-1 flex items-center justify-center">
-                      <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4-4m4 4l-4 4m2-5a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p class="text-lg font-semibold text-gray-900">{{ trip.arrival }}</p>
-                      <p class="text-sm text-gray-500">{{ trip.arrivalTime }}</p>
-                    </div>
+        <div v-else class="rusa-panel overflow-hidden">
+          <ul class="divide-y divide-gray-200 dark:divide-primary-800/50">
+            <li
+              v-for="trip in sortedResults"
+              :key="trip.id"
+              class="px-4 py-3"
+            >
+              <details class="group">
+                <summary class="flex cursor-pointer list-none items-center justify-between gap-3">
+                  <div>
+                    <p class="text-sm font-semibold text-gray-900 dark:text-white">
+                      {{ trip.departure }} → {{ trip.arrival }}
+                    </p>
+                    <p class="text-xs text-gray-500 dark:text-primary-300/80">
+                      {{ trip.date }} · {{ trip.departureTime }} · {{ formatMoney(trip.price) }}
+                    </p>
                   </div>
-                  
-                  <div class="flex items-center space-x-6 text-sm text-gray-600">
-                    <div class="flex items-center">
-                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      {{ trip.duration }}
-                    </div>
-                    <div class="flex items-center">
-                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                      </svg>
-                      {{ trip.availablePlaces }} places
-                    </div>
+                  <span class="text-xs font-medium text-gray-600 dark:text-primary-300/85">
+                    {{ trip.availablePlaces }} place(s)
+                  </span>
+                </summary>
+
+                <div class="mt-3 rounded-xl border border-primary-100 bg-primary-50/40 p-3 dark:border-primary-800/50 dark:bg-primary-900/20">
+                  <div class="grid grid-cols-1 gap-2 text-xs text-gray-700 dark:text-primary-200 sm:grid-cols-2">
+                    <p><strong>Transporteur:</strong> {{ trip.carrier }}</p>
+                    <p><strong>Type:</strong> {{ trip.vehicleType }}</p>
+                    <p><strong>Départ:</strong> {{ trip.departure }}</p>
+                    <p><strong>Arrivée:</strong> {{ trip.arrival }}</p>
+                  </div>
+                  <div class="mt-3 flex justify-end">
+                    <button
+                      class="rusa-btn-accent disabled:cursor-not-allowed disabled:opacity-50"
+                      :disabled="trip.availablePlaces < searchForm.passengers"
+                      @click="selectTrip(trip)"
+                    >
+                      {{ trip.availablePlaces < searchForm.passengers ? 'Places insuffisantes' : 'Réserver' }}
+                    </button>
                   </div>
                 </div>
-                
-                <div class="text-right">
-                  <div class="mb-4">
-                    <p class="text-2xl font-bold text-gray-900">€{{ trip.price }}</p>
-                    <p class="text-sm text-gray-500">par passager</p>
-                  </div>
-                  <div class="space-y-2">
-                    <div class="flex items-center text-sm text-gray-600">
-                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      {{ trip.carrier }}
-                    </div>
-                    <div class="flex items-center text-sm text-gray-600">
-                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM12.5 12a2.5 2.5 0 100-5 2.5 2.5 0 000 5z" />
-                      </svg>
-                      {{ trip.vehicleType }}
-                    </div>
-                  </div>
-                  <button
-                    class="rusa-btn-accent w-full disabled:cursor-not-allowed disabled:opacity-50"
-                    :disabled="trip.availablePlaces < searchForm.passengers"
-                    @click="selectTrip(trip)"
-                  >
-                    {{ trip.availablePlaces < searchForm.passengers ? 'Places insuffisantes' : 'Réserver' }}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+              </details>
+            </li>
+          </ul>
         </div>
       </div>
 
@@ -243,11 +249,42 @@
                   </div>
                   <div class="flex justify-between">
                     <span class="text-gray-600">Prix unitaire:</span>
-                    <span class="font-medium">€{{ selectedTrip.price }}</span>
+                    <span class="font-medium">{{ formatMoney(selectedTrip.price) }}</span>
                   </div>
                   <div class="flex justify-between">
                     <span class="text-gray-600">Total:</span>
-                    <span class="font-bold text-lg">€{{ selectedTrip.price * searchForm.passengers }}</span>
+                    <span class="font-bold text-lg">{{ formatMoney(selectedTrip.price * searchForm.passengers) }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="rounded-xl border border-primary-100 bg-white p-4 dark:border-primary-800 dark:bg-primary-950/20">
+                <h4 class="font-medium text-gray-900 mb-2 dark:text-white">Paiement</h4>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-primary-300/85">
+                      Méthode de paiement
+                    </label>
+                    <select
+                      v-model="bookingForm.methodePaiement"
+                      class="w-full rounded-xl border border-primary-100 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-primary-950 dark:text-primary-100"
+                    >
+                      <option value="Mobile Money">Mobile Money</option>
+                      <option value="Cash">Cash</option>
+                      <option value="Virement">Virement</option>
+                      <option value="Carte bancaire">Carte bancaire</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-primary-300/85">
+                      Référence transaction
+                    </label>
+                    <input
+                      v-model="bookingForm.referenceTransaction"
+                      type="text"
+                      placeholder="Ex: TRX-2026-0001"
+                      class="w-full rounded-xl border border-primary-100 bg-white px-3 py-2 text-sm text-gray-700 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 dark:bg-primary-950 dark:text-primary-100"
+                    />
                   </div>
                 </div>
               </div>
@@ -263,10 +300,11 @@
               </button>
               <button
                 type="button"
-                class="rusa-btn-accent"
+                class="rusa-btn-accent disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="isSubmittingBooking"
                 @click="confirmBooking"
               >
-                Confirmer la réservation
+                {{ isSubmittingBooking ? 'Paiement en cours...' : 'Confirmer et payer' }}
               </button>
             </div>
             </template>
@@ -276,10 +314,16 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import DefaultLayout from '@/components/layout/DefaultLayout.vue'
 import Modal from '@/components/ui/Modal.vue'
 import { notify } from '@/utils/notify'
+import { listVoyagesArray, ticksToHHmm } from '@/services/voyageService'
+import {
+  createReservationWithPaiement,
+  unwrapReservationWithPaiementResponse,
+} from '@/services/reservationService'
+import { useAuthStore } from '@/stores/auth'
 
 const searchForm = ref({
   departure: '',
@@ -294,64 +338,26 @@ const hasSearched = ref(false)
 const sortBy = ref('price')
 const showBookingModal = ref(false)
 const selectedTrip = ref(null)
+const allTrips = ref([])
+const isSubmittingBooking = ref(false)
+const auth = useAuthStore()
+const bookingForm = ref({
+  methodePaiement: 'Mobile Money',
+  referenceTransaction: '',
+})
+const generatedBillet = ref(null)
 
-const allTrips = [
-  {
-    id: 1,
-    departure: 'Paris',
-    arrival: 'Lyon',
-    departureTime: '08:00',
-    arrivalTime: '11:30',
-    date: '2024-01-15',
-    duration: '3h 30min',
-    price: 45,
-    carrier: 'Transport Rapide',
-    vehicleType: 'Bus',
-    availablePlaces: 40
-  },
-  {
-    id: 2,
-    departure: 'Paris',
-    arrival: 'Lyon',
-    departureTime: '10:30',
-    arrivalTime: '14:00',
-    date: '2024-01-15',
-    duration: '3h 30min',
-    price: 52,
-    carrier: 'Voyage Confort',
-    vehicleType: 'Minibus',
-    availablePlaces: 12
-  },
-  {
-    id: 3,
-    departure: 'Paris',
-    arrival: 'Lyon',
-    departureTime: '14:00',
-    arrivalTime: '17:30',
-    date: '2024-01-15',
-    duration: '3h 30min',
-    price: 65,
-    carrier: 'Speed Transport',
-    vehicleType: 'Car',
-    availablePlaces: 6
-  },
-  {
-    id: 4,
-    departure: 'Paris',
-    arrival: 'Lyon',
-    departureTime: '18:00',
-    arrivalTime: '21:30',
-    date: '2024-01-15',
-    duration: '3h 30min',
-    price: 38,
-    carrier: 'Eco Travel',
-    vehicleType: 'Van',
-    availablePlaces: 15
-  }
-]
+const departureOptions = computed(() => [...new Set(allTrips.value.map((t) => t.departure).filter(Boolean))].sort())
+const arrivalOptions = computed(() => [...new Set(allTrips.value.map((t) => t.arrival).filter(Boolean))].sort())
+const arrivalOptionsFiltered = computed(() => {
+  if (!searchForm.value.departure) return arrivalOptions.value
+  const dep = searchForm.value.departure
+  return [...new Set(allTrips.value.filter((t) => t.departure === dep).map((t) => t.arrival).filter(Boolean))].sort()
+})
+const displayTrips = computed(() => (hasSearched.value ? searchResults.value : allTrips.value))
 
 const sortedResults = computed(() => {
-  const results = [...searchResults.value]
+  const results = [...displayTrips.value]
   
   switch (sortBy.value) {
     case 'price':
@@ -368,23 +374,21 @@ const sortedResults = computed(() => {
 })
 
 const searchTrips = async () => {
-  if (!searchForm.value.departure || !searchForm.value.arrival || !searchForm.value.date) {
-    return
-  }
-  
   isSearching.value = true
-  
-  // Simulate API call
-  setTimeout(() => {
-    searchResults.value = allTrips.filter(trip => 
-      trip.departure.toLowerCase().includes(searchForm.value.departure.toLowerCase()) &&
-      trip.arrival.toLowerCase().includes(searchForm.value.arrival.toLowerCase()) &&
-      trip.date === searchForm.value.date &&
-      trip.availablePlaces >= searchForm.value.passengers
+  try {
+    const dep = searchForm.value.departure.trim().toLowerCase()
+    const arr = searchForm.value.arrival.trim().toLowerCase()
+    const date = searchForm.value.date ? String(searchForm.value.date) : ''
+    searchResults.value = allTrips.value.filter((trip) =>
+      (!dep || trip.departure.toLowerCase().includes(dep)) &&
+      (!arr || trip.arrival.toLowerCase().includes(arr)) &&
+      (!date || String(trip.date) === date) &&
+      trip.availablePlaces >= searchForm.value.passengers,
     )
-    isSearching.value = false
     hasSearched.value = true
-  }, 1500)
+  } finally {
+    isSearching.value = false
+  }
 }
 
 const resetSearch = () => {
@@ -398,8 +402,25 @@ const resetSearch = () => {
   hasSearched.value = false
 }
 
+const showAllTrips = async () => {
+  isSearching.value = true
+  await bootstrapTrips()
+  searchForm.value = {
+    departure: '',
+    arrival: '',
+    date: '',
+    passengers: 1
+  }
+  hasSearched.value = false
+  searchResults.value = []
+  isSearching.value = false
+  notify.toast.success('Liste complète des trajets affichée.')
+}
+
 const selectTrip = (trip) => {
   selectedTrip.value = trip
+  bookingForm.value.methodePaiement = 'Mobile Money'
+  bookingForm.value.referenceTransaction = ''
   showBookingModal.value = true
 }
 
@@ -408,21 +429,150 @@ const closeBookingModal = () => {
   selectedTrip.value = null
 }
 
-const confirmBooking = () => {
-  if (selectedTrip.value) {
-    console.log('Réservation confirmée:', {
-      trip: selectedTrip.value,
-      passengers: searchForm.value.passengers,
-      totalPrice: selectedTrip.value.price * searchForm.value.passengers
-    })
-    
-    // Here you would typically make an API call to create the booking
-    
+const confirmBooking = async () => {
+  if (!selectedTrip.value) return
+
+  const user = auth.user || {}
+  const idClient = Number(user.idClient ?? user.IdClient ?? auth.client?.idClient)
+  const idUtilisateur = Number(user.idUtilisateur ?? user.IdUtilisateur ?? user.id)
+  const idSociete = Number(user.idSociete ?? user.IdSociete ?? auth.societeId)
+  const idVoyage = Number(
+    selectedTrip.value._raw?.id ??
+      selectedTrip.value._raw?.Id ??
+      selectedTrip.value._raw?.idVoyage ??
+      selectedTrip.value._raw?.IdVoyage,
+  )
+  const nombreDePlace = Number(searchForm.value.passengers) || 1
+  const montant = Number(selectedTrip.value.price) * nombreDePlace
+
+  if (!Number.isFinite(idClient) || idClient <= 0) {
+    notify.toast.error('idClient manquant. Reconnectez-vous puis reessayez.')
+    return
+  }
+  if (!Number.isFinite(idUtilisateur) || idUtilisateur <= 0) {
+    notify.toast.error('idUtilisateur manquant. Reconnectez-vous puis reessayez.')
+    return
+  }
+  if (!Number.isFinite(idSociete) || idSociete <= 0) {
+    notify.toast.error('idSociete manquant. Reconnectez-vous puis reessayez.')
+    return
+  }
+  if (!Number.isFinite(idVoyage) || idVoyage <= 0) {
+    notify.toast.error('Le voyage selectionne est invalide.')
+    return
+  }
+  if (!bookingForm.value.methodePaiement) {
+    notify.toast.error('Selectionnez la methode de paiement.')
+    return
+  }
+
+  isSubmittingBooking.value = true
+  try {
+    const payload = {
+      reservation: {
+        idVoyage,
+        idClient,
+        nombreDePlace,
+        idUtilisateur,
+        idSociete,
+      },
+      paiement: {
+        montantAPaye: montant,
+        montantPaye: montant,
+        methodePaiement: bookingForm.value.methodePaiement,
+        referenceTransaction: bookingForm.value.referenceTransaction || `TRX-${Date.now()}`,
+        idUtilisateur,
+        idSociete,
+      },
+    }
+
+    const raw = await createReservationWithPaiement(payload)
+    const response = unwrapReservationWithPaiementResponse(raw)
+    const billet = response?.billet && typeof response.billet === 'object' ? response.billet : null
+    generatedBillet.value = billet
+      ? {
+          idReservation: Number(
+            billet.idReservation ??
+              billet.IdReservation ??
+              response?.reservation?.idReservation ??
+              response?.reservation?.IdReservation,
+          ) || 0,
+          qrCode: String(billet.qrCode ?? billet.QrCode ?? ''),
+          urlBillet: String(billet.urlBillet ?? billet.UrlBillet ?? ''),
+          transactionId: String(response?.transactionId ?? ''),
+        }
+      : null
     closeBookingModal()
     resetSearch()
-    
-    notify.toast.success('Réservation confirmée avec succès !')
+    await bootstrapTrips()
+    notify.toast.success(
+      response?.message ||
+        (generatedBillet.value
+          ? 'Reservation, paiement et billet générés avec succès.'
+          : 'Reservation + paiement effectues avec succes.'),
+    )
+  } catch (e) {
+    notify.toast.error(e?.message || 'Echec de la reservation avec paiement.')
+  } finally {
+    isSubmittingBooking.value = false
   }
+}
+
+function openGeneratedBillet() {
+  const url = String(generatedBillet.value?.urlBillet || '').trim()
+  if (!url) {
+    notify.toast.error('Lien du billet indisponible.')
+    return
+  }
+  window.open(url, '_blank', 'noopener,noreferrer')
+}
+
+function mapVoyageToTrip(v) {
+  const date = String(v.dateDepart ?? v.DateDepart ?? '').slice(0, 10)
+  const dep = String(v.villeDepart ?? v.VilleDepart ?? '—')
+  const arr = String(v.villeArrivee ?? v.VilleArrivee ?? '—')
+  const totalPlaces = Number(v.nombrePlacesTotal ?? v.NombrePlacesTotal ?? 0)
+  const reserved = Number(v.nombrePlacesReservees ?? v.NombrePlacesReservees ?? 0)
+  const explicitAvailable = Number(v.nombrePlacesDisponibles ?? v.NombrePlacesDisponibles)
+  let availablePlaces = Number.isFinite(explicitAvailable)
+    ? explicitAvailable
+    : Number.isFinite(totalPlaces - reserved) && totalPlaces > 0
+      ? totalPlaces - reserved
+      : 30
+  availablePlaces = Math.max(0, Math.floor(availablePlaces))
+  return {
+    id: Number(v.id ?? v.Id ?? v.idVoyage ?? v.IdVoyage) || Math.random(),
+    departure: dep,
+    arrival: arr,
+    departureTime: ticksToHHmm(v.heureDepart ?? v.HeureDepart) || '—',
+    arrivalTime: '—',
+    date,
+    duration: '—',
+    price: Number(v.prix ?? v.Prix ?? 0),
+    carrier: String(v.nomSociete ?? v.NomSociete ?? 'RusaTravel'),
+    vehicleType: String(v.libelleTypeBus ?? v.LibelleTypeBus ?? v.typeBus ?? v.TypeBus ?? 'Bus'),
+    availablePlaces,
+    _raw: v,
+  }
+}
+
+async function bootstrapTrips() {
+  try {
+    const voyages = await listVoyagesArray()
+    allTrips.value = voyages
+      .filter((v) => v.statut !== false && v.Statut !== false)
+      .map(mapVoyageToTrip)
+  } catch (e) {
+    notify.toast.error(e?.message || 'Impossible de charger les trajets.')
+  }
+}
+
+onMounted(bootstrapTrips)
+
+function formatMoney(value) {
+  const v = Number(value)
+  if (!Number.isFinite(v)) return '—'
+  return `${v.toLocaleString('fr-CD', { maximumFractionDigits: 2 })} FC`
 }
 </script>
 

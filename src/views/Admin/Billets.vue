@@ -151,9 +151,9 @@
                     <button
                       type="button"
                       class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-200"
-                      @click="copyQr(b.qrCode)"
+                      @click="downloadBillet(b)"
                     >
-                      Copier QR
+                      Télécharger
                     </button>
                   </div>
                 </td>
@@ -261,10 +261,10 @@
                     </div>
                     <div class="min-w-0">
                       <p class="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-primary-400/80">
-                        ID billet
+                        Société
                       </p>
-                      <p class="mt-0.5 font-mono text-sm font-bold tracking-tight text-gray-900 dark:text-white">
-                        {{ billetIdDisplay(detailBillet) }}
+                      <p class="mt-0.5 text-sm font-bold tracking-tight text-gray-900 dark:text-white">
+                        {{ societeLabel(detailBillet) }}
                       </p>
                     </div>
                     <div class="col-span-2 min-w-0 border-t border-gray-200/80 pt-1.5 dark:border-primary-800/50">
@@ -374,12 +374,12 @@
                 Fermer
               </button>
               <button
-                v-if="detailBillet.qrCode"
+                v-if="detailBillet.qrCode || detailBillet.urlBillet"
                 type="button"
                 class="flex-1 rounded-xl bg-primary-500 py-2 text-sm font-bold text-primary-950 shadow-md transition hover:bg-primary-400 sm:py-2.5"
-                @click="copyQr(detailBillet.qrCode)"
+                @click="downloadBillet(detailBillet)"
               >
-                Copier QR
+                Télécharger
               </button>
             </footer>
           </div>
@@ -482,6 +482,7 @@ import {
 } from '@/services/reservationService'
 import { notify } from '@/utils/notify'
 import { qrCodeToDataUrlWithLogo } from '@/utils/qrCodeWithLogo'
+import { downloadBilletUnified } from '@/utils/billetDownload'
 
 const headerIntro = useAdminModuleGreeting('bienvenue — suivi des billets et contrôle des émissions.')
 const { idSocieteForSave } = useTenantSocieteId()
@@ -659,6 +660,10 @@ function billetIdDisplay(b) {
   return `RS-${String(id).padStart(6, '0')}`
 }
 
+function societeLabel(b) {
+  return String(b?.nomSociete ?? b?.raw?.nomSociete ?? b?.raw?.NomSociete ?? 'Rusa Travel').trim() || 'Rusa Travel'
+}
+
 function billetMontantFc(b) {
   const v = Number(b?.prix) || 0
   if (v <= 0) return null
@@ -694,7 +699,7 @@ function closeDetailModal() {
 }
 
 function shareBilletHint() {
-  notify.toast.info('Utilisez le partage du navigateur ou le bouton « Copier QR ».')
+  notify.toast.info('Utilisez le partage du navigateur ou le bouton « Télécharger ».')
 }
 
 function generateQrLocal() {
@@ -731,14 +736,146 @@ async function submitCreate() {
   }
 }
 
-async function copyQr(text) {
-  const t = String(text || '')
-  if (!t) return
+function triggerDownloadUrl(url, filename = '') {
+  const a = document.createElement('a')
+  a.href = url
+  if (filename) a.download = filename
+  a.target = '_blank'
+  a.rel = 'noopener'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+}
+
+function safeText(v, fallback = '—') {
+  const s = String(v ?? '').trim()
+  return s || fallback
+}
+
+function ticketDateLabel(billet) {
+  const raw = String(billet?.dateVoyage || '').trim()
+  if (!raw || raw === '—') return '—'
+  const d = new Date(raw)
+  if (Number.isNaN(d.getTime())) return raw.slice(0, 10)
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+function fileSafePart(v, fallback = 'billet') {
+  const s = String(v || '').trim().toLowerCase()
+  if (!s) return fallback
+  return s.replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || fallback
+}
+
+function buildBilletStyledSvg(billet, qrDataUrl) {
+  const company = 'RUSA TRAVEL'
+  const passenger = safeText(billet?.nomClient, 'Passager')
+  const route = safeText(billet?.trajet, 'Trajet')
+  const dateVoy = ticketDateLabel(billet)
+  const departTime = safeText(billet?.heure, '—')
+  const bus = safeText(billetBusLabel(billet), '—')
+  const seat = safeText(billet?.idReservation ? `R-${billet.idReservation}` : '', '—')
+  const ref = safeText(billetIdDisplay(billet), '—')
+  const amount = safeText(billetMontantFc(billet), '—')
+  const qrSrc = qrDataUrl || ''
+
+  return `
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="430" viewBox="0 0 1200 430">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#eef2ff"/>
+    </linearGradient>
+    <style>
+      .title { font: 700 34px Arial, sans-serif; fill: #0f172a; letter-spacing: 1px; }
+      .sub { font: 600 18px Arial, sans-serif; fill: #334155; letter-spacing: .5px; }
+      .label { font: 700 14px Arial, sans-serif; fill: #64748b; letter-spacing: .8px; }
+      .value { font: 700 24px Arial, sans-serif; fill: #0f172a; }
+      .small { font: 600 16px Arial, sans-serif; fill: #0f172a; }
+    </style>
+  </defs>
+  <rect x="10" y="10" width="1180" height="410" rx="24" fill="url(#bg)" stroke="#cbd5e1" stroke-width="2"/>
+  <rect x="20" y="20" width="920" height="390" rx="18" fill="#ffffff" stroke="#e2e8f0"/>
+  <rect x="952" y="20" width="228" height="390" rx="18" fill="#f8fafc" stroke="#e2e8f0"/>
+  <line x1="940" y1="30" x2="940" y2="400" stroke="#94a3b8" stroke-dasharray="7 7"/>
+
+  <text x="54" y="72" class="title">${company}</text>
+  <text x="54" y="102" class="sub">BILLET DE VOYAGE</text>
+
+  <text x="54" y="150" class="label">PASSAGER</text>
+  <text x="54" y="180" class="value">${passenger}</text>
+
+  <text x="54" y="222" class="label">TRAJET</text>
+  <text x="54" y="252" class="value">${route}</text>
+
+  <text x="54" y="294" class="label">DATE</text>
+  <text x="54" y="322" class="small">${dateVoy}</text>
+
+  <text x="270" y="294" class="label">DEPART</text>
+  <text x="270" y="322" class="small">${departTime}</text>
+
+  <text x="440" y="294" class="label">BUS</text>
+  <text x="440" y="322" class="small">${bus}</text>
+
+  <text x="560" y="294" class="label">SIEGE/REF</text>
+  <text x="560" y="322" class="small">${seat}</text>
+
+  <text x="730" y="294" class="label">PRIX</text>
+  <text x="730" y="322" class="small">${amount}</text>
+
+  <text x="54" y="372" class="label">REFERENCE BILLET</text>
+  <text x="54" y="398" class="small">${ref}</text>
+
+  <text x="972" y="70" class="label">BOARDING PASS</text>
+  <rect x="972" y="90" width="188" height="188" rx="8" fill="#fff" stroke="#cbd5e1"/>
+  ${qrSrc ? `<image href="${qrSrc}" x="978" y="96" width="176" height="176"/>` : ''}
+  <text x="972" y="315" class="label">PASSAGER</text>
+  <text x="972" y="338" class="small">${passenger}</text>
+  <text x="972" y="366" class="label">REF</text>
+  <text x="972" y="390" class="small">${ref}</text>
+</svg>`.trim()
+}
+
+async function svgToPngDataUrl(svg, width = 1200, height = 430) {
+  const blob = new Blob([svg], { type: 'image/svg+xml;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
   try {
-    await navigator.clipboard.writeText(t)
-    notify.toast.success('Code copié')
-  } catch {
-    await notify.error('Copie impossible', 'Presse-papiers non disponible.')
+    const img = await new Promise((resolve, reject) => {
+      const i = new Image()
+      i.onload = () => resolve(i)
+      i.onerror = reject
+      i.src = url
+    })
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    if (!ctx) throw new Error('Canvas indisponible')
+    ctx.drawImage(img, 0, 0, width, height)
+    return canvas.toDataURL('image/png')
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
+async function ensureBilletQrDataUrl(billet) {
+  const q = String(billet?.qrCode || '').trim()
+  if (!q) return ''
+  if (qrImageDataUrl.value && detailBillet.value?.id === billet?.id) return qrImageDataUrl.value
+  return qrCodeToDataUrlWithLogo(q, {
+    width: 512,
+    margin: 2,
+    color: { dark: '#0f172a', light: '#ffffff' },
+  })
+}
+
+async function downloadBillet(billet) {
+  const b = billet && typeof billet === 'object' ? billet : null
+  if (!b) return
+  try {
+    await downloadBilletUnified(b, 'billet')
+    notify.toast.success('Billet téléchargé')
+  } catch (e) {
+    await notify.error('Téléchargement impossible', e?.message || 'Impossible de télécharger le billet.')
   }
 }
 </script>

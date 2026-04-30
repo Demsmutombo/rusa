@@ -5,6 +5,7 @@
 
 import { useAuthStore } from '@/stores/auth'
 import { scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
+import { API_ENDPOINTS } from './Endpoint.service'
 import { apiGet, apiPost, apiPut, apiDelete } from './apiService'
 
 /**
@@ -61,16 +62,22 @@ export function filterUtilisateursForCurrentSociete(items) {
 export function unwrapUtilisateurList(data) {
   if (!data) return { items: [], totalCount: 0 }
   if (Array.isArray(data)) return { items: data, totalCount: data.length }
+  const dataArr = Array.isArray(data.data) ? data.data : null
+  const inner = data.data && typeof data.data === 'object' && !Array.isArray(data.data) ? data.data : null
+  const innerItems = inner ? inner.items ?? inner.Items ?? null : null
   const candidates = [
+    dataArr,
     data.items,
-    data.data,
+    Array.isArray(innerItems) ? innerItems : null,
     data.results,
     data.utilisateurs,
     data.value,
     data.records,
   ].find((x) => Array.isArray(x))
   if (candidates) {
+    const pag = data.pagination && typeof data.pagination === 'object' ? data.pagination : null
     const total =
+      pag?.total ??
       data.totalCount ??
       data.total ??
       data.count ??
@@ -156,9 +163,7 @@ export function listUtilisateurs(params = {}) {
   const page = params.page ?? 1
   const pageSize = params.pageSize ?? 50
   const q = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
-  return apiGet(`/api/Utilisateur?${q.toString()}`, {
-    headers: { Accept: 'application/json' },
-  })
+  return apiGet(`${API_ENDPOINTS.UTILISATEUR.LIST}?${q.toString()}`)
 }
 
 /**
@@ -170,9 +175,7 @@ export function listUtilisateursByRoleId(roleId, params = {}) {
   const page = params.page ?? 1
   const pageSize = params.pageSize ?? 50
   const q = new URLSearchParams({ page: String(page), pageSize: String(pageSize) })
-  return apiGet(`/api/Utilisateur/role/${roleId}?${q.toString()}`, {
-    headers: { Accept: 'application/json' },
-  })
+  return apiGet(`${API_ENDPOINTS.UTILISATEUR.byRoleId(roleId)}?${q.toString()}`)
 }
 
 /**
@@ -180,15 +183,11 @@ export function listUtilisateursByRoleId(roleId, params = {}) {
  */
 export function listUtilisateursByRoleName(nomRole) {
   const encoded = encodeURIComponent(nomRole)
-  return apiGet(`/api/Utilisateur/by-role-name/${encoded}`, {
-    headers: { Accept: 'application/json' },
-  })
+  return apiGet(API_ENDPOINTS.UTILISATEUR.byRoleName(encoded))
 }
 
 export function getUtilisateur(id) {
-  return apiGet(`/api/Utilisateur/${id}`, {
-    headers: { Accept: 'application/json' },
-  })
+  return apiGet(API_ENDPOINTS.UTILISATEUR.byId(id))
 }
 
 /**
@@ -225,7 +224,7 @@ export function normalizeCreateUtilisateurBody(input) {
  * @param {object} body — nomComplet, email, motDePasse, telephone, photoUrl, lieuNaissance, dateNaissance, genre, idRole, idSociete?, statut
  */
 export function createUtilisateur(body) {
-  return apiPost('/api/Utilisateur', normalizeCreateUtilisateurBody(body))
+  return apiPost(API_ENDPOINTS.UTILISATEUR.CREATE, normalizeCreateUtilisateurBody(body))
 }
 
 /**
@@ -233,7 +232,7 @@ export function createUtilisateur(body) {
  * @param {object} body — idUtilisateur, nomComplet, email, telephone, photoUrl, lieuNaissance, dateNaissance, genre
  */
 export function updateUtilisateur(id, body) {
-  return apiPut(`/api/Utilisateur/${id}`, body)
+  return apiPut(API_ENDPOINTS.UTILISATEUR.update(id), body)
 }
 
 function unwrapUtilisateurDetail(raw, fallbackId) {
@@ -263,23 +262,29 @@ export async function deactivateUtilisateur(id, rawHint = null) {
 }
 
 export function toggleStatutUtilisateur(id) {
-  return apiPut(`/api/Utilisateur/toggle-statut/${id}`, {})
+  return apiPut(API_ENDPOINTS.UTILISATEUR.toggleStatut(id), {})
 }
 
 export function getUtilisateurRoles(id) {
-  return apiGet(`/api/Utilisateur/${id}/roles`, {
-    headers: { Accept: 'application/json' },
-  })
+  return apiGet(API_ENDPOINTS.UTILISATEUR.roles(id))
 }
 
 export function addUtilisateurRole(idUtilisateur, roleId) {
-  return apiPost(`/api/Utilisateur/${idUtilisateur}/roles/${roleId}`, {})
+  return apiPost(API_ENDPOINTS.UTILISATEUR.addRole(idUtilisateur, roleId), {})
 }
 
 export function removeUtilisateurRole(idUtilisateur, roleId) {
-  return apiDelete(`/api/Utilisateur/${idUtilisateur}/roles/${roleId}`)
+  return apiDelete(API_ENDPOINTS.UTILISATEUR.removeRole(idUtilisateur, roleId))
 }
 
 export function setPrimaryUtilisateurRole(idUtilisateur, roleId) {
-  return apiPut(`/api/Utilisateur/${idUtilisateur}/roles/${roleId}/primary`, {})
+  return apiPut(API_ENDPOINTS.UTILISATEUR.setPrimaryRole(idUtilisateur, roleId), {})
+}
+
+/**
+ * Changement de mot de passe (endpoint Swagger).
+ * @param {Record<string, unknown>} body
+ */
+export function changeUtilisateurMotDePasse(body) {
+  return apiPost(API_ENDPOINTS.UTILISATEUR.changePassword, body)
 }

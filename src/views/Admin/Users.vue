@@ -154,7 +154,7 @@
                     @click="deleteUser(user)"
                     class="text-red-600 hover:text-red-900"
                   >
-                    Supprimer
+                    Désactivé
                   </button>
                 </td>
               </tr>
@@ -285,6 +285,25 @@ const userForm = ref({
   password: '',
 })
 
+function isSuperAdminRow(row) {
+  const r = row?._raw && typeof row._raw === 'object' ? row._raw : {}
+  const roleText = String(
+    r.rolePrincipal ??
+      r.nomRole ??
+      r.roleName ??
+      r.roleLibelle ??
+      r.role ??
+      row?.role ??
+      '',
+  )
+    .trim()
+    .toLowerCase()
+  if (roleText.includes('superadmin') || roleText.includes('super-admin')) return true
+  const rid = Number(r.idRole ?? r.IdRole)
+  if (Number.isFinite(rid) && rid === 1) return true
+  return false
+}
+
 async function loadUsers() {
   listLoading.value = true
   listError.value = ''
@@ -304,8 +323,10 @@ async function loadUsers() {
     }
     const { items } = unwrapUtilisateurList(raw)
     const scoped = filterUtilisateursForCurrentSociete(items)
-    users.value = scoped.map(mapUtilisateurToRow)
-    totalCount.value = scoped.length
+    const mapped = scoped.map(mapUtilisateurToRow)
+    const visible = mapped.filter((u) => !isSuperAdminRow(u))
+    users.value = visible
+    totalCount.value = visible.length
   } catch (e) {
     listError.value = e?.message || 'Impossible de charger les utilisateurs'
     users.value = []
@@ -331,6 +352,7 @@ onMounted(() => {
 
 const filteredUsers = computed(() => {
   return users.value.filter((user) => {
+    if (isSuperAdminRow(user)) return false
     const q = searchQuery.value.toLowerCase()
     const matchesSearch =
       !q ||

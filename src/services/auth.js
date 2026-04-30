@@ -1,4 +1,4 @@
-// import { apiClient } from './api'
+// import { apiPost, apiGet } from './apiService'
 
 export const authService = {
   async login(email, password) {
@@ -31,8 +31,7 @@ export const authService = {
     })
 
     // Real API call (uncomment when ready):
-    // const response = await apiClient.post('/auth/login', { email, password })
-    // return response.data
+    // return apiPost('/auth/login', { email, password })
   },
 
   async getCurrentUser() {
@@ -67,7 +66,6 @@ export const authService = {
     })
 
     // Real API call:
-    // const response = await apiClient.get('/auth/me')
-    // return response.data
+    // return apiGet('/auth/me')
   }
 }

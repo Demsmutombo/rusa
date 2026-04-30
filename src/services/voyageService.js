@@ -7,13 +7,9 @@
 
 import { useAuthStore } from '@/stores/auth'
 import { scopeEntitiesToUserSociete } from '@/utils/societeIsolation'
+import { API_ENDPOINTS } from './Endpoint.service'
 import { apiGet, apiPost, apiPut } from './apiService'
 
-const JSON_ACCEPT = {
-  headers: {
-    Accept: 'text/plain, application/json;q=0.9, */*;q=0.8',
-  },
-}
 
 /** 1 tick = 100 ns → 1 s = 10_000_000 ticks */
 const TICKS_PER_SECOND = 10_000_000
@@ -141,13 +137,16 @@ export function hhmmToTicks(hhmm) {
 export function unwrapVoyageList(data) {
   if (data == null) return []
   if (Array.isArray(data)) return data
-  const arr = data.data ?? data.items ?? data.results ?? data.value ?? []
+  if (Array.isArray(data.data)) return data.data
+  const nested = data.data && typeof data.data === 'object' ? data.data : null
+  if (nested && Array.isArray(nested.data)) return nested.data
+  const arr = data.items ?? data.results ?? data.value ?? []
   return Array.isArray(arr) ? arr : []
 }
 
 export async function listVoyagesArray() {
   const auth = useAuthStore()
-  const raw = await apiGet('/api/Voyage', JSON_ACCEPT)
+  const raw = await apiGet(API_ENDPOINTS.VOYAGE.LIST)
   let list = unwrapVoyageList(raw)
   if (auth.role !== 'superadmin') {
     list = scopeEntitiesToUserSociete(list, { role: auth.role, societeId: auth.societeId })
@@ -163,7 +162,7 @@ export function getVoyage(id) {
   if (!Number.isFinite(nid) || nid <= 0) {
     return Promise.reject(new Error('Identifiant voyage invalide.'))
   }
-  return apiGet(`/api/Voyage/${nid}`, JSON_ACCEPT)
+  return apiGet(API_ENDPOINTS.VOYAGE.byId(nid))
 }
 
 /**
@@ -178,7 +177,7 @@ export function getVoyage(id) {
  * }} body
  */
 export function createVoyage(body) {
-  return apiPost('/api/Voyage', body, JSON_ACCEPT)
+  return apiPost(API_ENDPOINTS.VOYAGE.CREATE, body)
 }
 
 /**
@@ -199,5 +198,5 @@ export function updateVoyage(id, body) {
   if (!Number.isFinite(nid) || nid <= 0) {
     return Promise.reject(new Error('Identifiant voyage invalide.'))
   }
-  return apiPut(`/api/Voyage/${nid}`, body, JSON_ACCEPT)
+  return apiPut(API_ENDPOINTS.VOYAGE.byId(nid), body)
 }
